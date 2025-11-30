@@ -1,0 +1,7 @@
+# CMake build directories
+build/
+out/
+Debug/
+Release/
+RelWithDebInfo/
+MinSizeRel/
