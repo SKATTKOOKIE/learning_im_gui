@@ -52,11 +52,35 @@ target_link_libraries(imgui PUBLIC
 # -----------------
 # MAIN APPLICATION
 # -----------------
-add_executable(app Main.cpp)
+# Core sources
+file(GLOB CORE_SOURCES "${CMAKE_SOURCE_DIR}/src/core/*.cpp")
+file(GLOB CORE_HEADERS "${CMAKE_SOURCE_DIR}/src/core/*.h")
+
+# Component sources
+file(GLOB_RECURSE COMPONENT_SOURCES "${CMAKE_SOURCE_DIR}/src/components/**/*.cpp")
+file(GLOB_RECURSE COMPONENT_HEADERS "${CMAKE_SOURCE_DIR}/src/components/**/*.h")
+
+# Main file
+set(MAIN_SOURCE "${CMAKE_SOURCE_DIR}/src/Main.cpp")
+
+# Combine all sources
+set(APP_SOURCES 
+    ${MAIN_SOURCE}
+    ${CORE_SOURCES}
+    ${COMPONENT_SOURCES}
+)
+
+set(APP_HEADERS
+    ${CORE_HEADERS}
+    ${COMPONENT_HEADERS}
+)
+
+add_executable(app ${APP_SOURCES} ${APP_HEADERS})
 
 target_include_directories(app PRIVATE
     ${CMAKE_SOURCE_DIR}/libraries/include
     ${CMAKE_SOURCE_DIR}/imgui
+    ${CMAKE_SOURCE_DIR}/src
 )
 
 target_link_libraries(app PRIVATE
