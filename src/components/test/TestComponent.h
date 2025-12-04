@@ -1,5 +1,5 @@
 #pragma once
-#include "core/UIComponent.h"
+#include <core/UIComponent.h>
 
 class TestComponent : public UIComponent
 {
@@ -9,4 +9,5 @@ public:
 
 private:
     bool show_example_text;
+    bool show_shutdown_modal;
 };

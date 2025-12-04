@@ -10,12 +10,9 @@ void TestComponent2::Render()
 {
     ImGui::Begin("This is a copy to test the cmake files");
 
-    ImGui::Checkbox("Unhide the text, perchance", &show_example_text);
+    bool show_demo_window = true;
 
-    if (show_example_text)
-    {
-        ImGui::Text("I am the hidden text, but number 2!");
-    }
+    ImGui::ShowDemoWindow(&show_demo_window);
 
     ImGui::End();
 }

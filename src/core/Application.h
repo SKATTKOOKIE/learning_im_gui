@@ -11,14 +11,14 @@ class UIComponent;
 class Application
 {
 public:
-    Application(int width, int height, const std::string& title);
+    Application(int width, int height, const std::string &title);
     ~Application();
 
     bool Initialize();
     void Run();
     void AddComponent(std::shared_ptr<UIComponent> component);
 
-    GLFWwindow* GetWindow() const { return window; }
+    GLFWwindow *GetWindow() const { return window; }
 
 private:
     bool InitializeGLFW();
@@ -26,8 +26,9 @@ private:
     void Shutdown();
     void BeginFrame();
     void EndFrame();
+    void SetupImGuiStyle();
 
-    GLFWwindow* window;
+    GLFWwindow *window;
     int width;
     int height;
     std::string title;
