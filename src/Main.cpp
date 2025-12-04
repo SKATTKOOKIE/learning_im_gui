@@ -1,7 +1,6 @@
 #include "core/Application.h"
+#include "components/layout/LayoutManager.h"
 #include "components/test/TestComponent.h"
-
-// This include is just a test
 #include "components/test2/TestComponent2.h"
 
 #include <memory>
@@ -15,12 +14,19 @@ int main()
         return -1;
     }
 
-    // Add the test component
+    // Create the layout manager
+    auto layoutManager = std::make_shared<LayoutManager>();
+    
+    // Create widgets
     auto testComponent = std::make_shared<TestComponent>();
-    app.AddComponent(testComponent);
-
     auto testComponent2 = std::make_shared<TestComponent2>();
-    app.AddComponent(testComponent2);
+    
+    // Add widgets to specific zones
+    layoutManager->AddWidget(DockZone::Left, testComponent);
+    layoutManager->AddWidget(DockZone::Right, testComponent2);
+    
+    // Add the layout manager as the main component
+    app.AddComponent(layoutManager);
 
     app.Run();
 
