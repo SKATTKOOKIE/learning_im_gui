@@ -230,6 +230,12 @@ void Application::Run()
     {
         BeginFrame();
 
+        // Call update callback if set (for WebSocket polling, etc.)
+        if (updateCallback_)
+        {
+            updateCallback_();
+        }
+
         // Render all components
         for (auto &component : components)
         {
