@@ -1,0 +1,41 @@
+#pragma once
+#include <string>
+#include <memory>
+#include <vector>
+#include <functional>
+
+// Forward declare GLFWwindow to avoid including GLFW here
+struct GLFWwindow;
+
+class UIComponent;
+
+class Application
+{
+public:
+    Application(int width, int height, const std::string &title);
+    ~Application();
+
+    bool Initialize();
+    void Run();
+    void AddComponent(std::shared_ptr<UIComponent> component);
+    
+    // Add update callback for custom logic per frame
+    void SetUpdateCallback(std::function<void()> callback) { updateCallback_ = callback; }
+
+    GLFWwindow *GetWindow() const { return window; }
+
+private:
+    bool InitializeGLFW();
+    bool InitializeImGui();
+    void Shutdown();
+    void BeginFrame();
+    void EndFrame();
+    void SetupImGuiStyle();
+
+    GLFWwindow *window;
+    int width;
+    int height;
+    std::string title;
+    std::vector<std::shared_ptr<UIComponent>> components;
+    std::function<void()> updateCallback_;  // Add this member variable
+};
