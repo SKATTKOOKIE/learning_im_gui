@@ -19,7 +19,7 @@ endif()
 
 # Platform-specific Boost configuration
 if(WIN32)
-    # On Windows, use the submodule boost
+    # On Windows, use the submodule boost (same as Linux for consistency)
     set(Boost_INCLUDE_DIRS 
         "${CMAKE_SOURCE_DIR}/external/boost"
     )
@@ -107,6 +107,10 @@ else()
     # On Linux, don't include libraries/include to avoid Windows Boost headers
     target_include_directories(imgui PUBLIC
         ${CMAKE_SOURCE_DIR}/imgui
+    )
+    # Add GLFW includes for imgui_impl_glfw.cpp
+    target_include_directories(imgui PRIVATE
+        ${CMAKE_SOURCE_DIR}/external/glfw/include
     )
 endif()
 
