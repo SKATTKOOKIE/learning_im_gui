@@ -121,8 +121,8 @@ void WebSocketMonitor::AddMessage(const std::string& text, bool isSent)
     
     messages_.push_back(msg);
     
-    // Limit message history
-    if (messages_.size() > maxMessages_)
+    // Limit message history - cast to size_t to fix sign comparison warning
+    if (messages_.size() > static_cast<size_t>(maxMessages_))
     {
         messages_.erase(messages_.begin());
     }
@@ -136,7 +136,14 @@ std::string WebSocketMonitor::FormatTimestamp(const std::chrono::system_clock::t
     
     std::stringstream ss;
     std::tm tm;
+    
+    // Platform-specific localtime function
+#ifdef _WIN32
     localtime_s(&tm, &now);
+#else
+    localtime_r(&now, &tm);
+#endif
+    
     ss << std::put_time(&tm, "%H:%M:%S");
     ss << '.' << std::setfill('0') << std::setw(3) << ms.count();
     
