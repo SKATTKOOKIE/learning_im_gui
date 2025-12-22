@@ -84,30 +84,32 @@ if(UNIX AND NOT APPLE)
 endif()
 
 # -----------------
-# IMGUI
+# IMGUI (from submodule)
 # -----------------
+set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/external/imgui")
+
 set(IMGUI_SOURCES
-    ${CMAKE_SOURCE_DIR}/imgui/imgui.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/imgui_draw.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/imgui_widgets.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/imgui_tables.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/imgui_demo.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_glfw.cpp
-    ${CMAKE_SOURCE_DIR}/imgui/imgui_impl_opengl3.cpp
+    ${IMGUI_DIR}/imgui.cpp
+    ${IMGUI_DIR}/imgui_draw.cpp
+    ${IMGUI_DIR}/imgui_widgets.cpp
+    ${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/imgui_demo.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
 
+target_include_directories(imgui PUBLIC
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
+)
+
 if(WIN32)
     target_include_directories(imgui PUBLIC
-        ${CMAKE_SOURCE_DIR}/imgui
         ${CMAKE_SOURCE_DIR}/libraries/include
     )
 else()
-    # On Linux, don't include libraries/include to avoid Windows Boost headers
-    target_include_directories(imgui PUBLIC
-        ${CMAKE_SOURCE_DIR}/imgui
-    )
     # Add GLFW includes for imgui_impl_glfw.cpp
     target_include_directories(imgui PRIVATE
         ${CMAKE_SOURCE_DIR}/external/glfw/include
@@ -117,6 +119,8 @@ endif()
 target_link_libraries(imgui PUBLIC 
     glad
 )
+
+message(STATUS "Using ImGui from submodule: ${IMGUI_DIR}")
 
 # -----------------
 # MAIN APPLICATION
@@ -150,7 +154,8 @@ add_executable(app ${APP_SOURCES} ${APP_HEADERS})
 # Configure includes - Boost MUST come before libraries/include
 target_include_directories(app PRIVATE
     ${Boost_INCLUDE_DIRS}  # Boost first to override any stale headers
-    ${CMAKE_SOURCE_DIR}/imgui
+    ${IMGUI_DIR}
+    ${IMGUI_DIR}/backends
     ${CMAKE_SOURCE_DIR}/src
 )
 
