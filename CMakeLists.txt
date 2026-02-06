@@ -17,13 +17,17 @@ if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif()
 
-# Platform-specific Boost configuration
 if(WIN32)
-    # On Windows, use the submodule boost (same as Linux for consistency)
-    set(Boost_INCLUDE_DIRS 
-        "${CMAKE_SOURCE_DIR}/external/boost"
-    )
-    message(STATUS "Using Boost submodule: ${Boost_INCLUDE_DIRS}")
+    # On Windows, use the submodule boost
+    # Boost submodules have headers in libs/*/include/
+    file(GLOB BOOST_INCLUDE_SUBDIRS "${CMAKE_SOURCE_DIR}/external/boost/libs/*/include")
+    
+    # Numeric has nested sub-libraries (conversion, interval, odeint, etc.)
+    file(GLOB BOOST_NUMERIC_SUBDIRS "${CMAKE_SOURCE_DIR}/external/boost/libs/numeric/*/include")
+    
+    set(Boost_INCLUDE_DIRS ${BOOST_INCLUDE_SUBDIRS} ${BOOST_NUMERIC_SUBDIRS})
+    list(LENGTH Boost_INCLUDE_DIRS BOOST_LIB_COUNT)
+    message(STATUS "Using Boost submodule with ${BOOST_LIB_COUNT} library includes")
 else()
     # On Linux, prefer system Boost first, fallback to submodule
     find_package(Boost QUIET)
