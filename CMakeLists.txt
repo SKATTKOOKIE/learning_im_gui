@@ -17,29 +17,42 @@ if(POLICY CMP0167)
     cmake_policy(SET CMP0167 NEW)
 endif()
 
+# -----------------
+# BOOST (Header-only via submodule or system)
+# -----------------
+
+add_library(boost_headers INTERFACE)
+
 if(WIN32)
-    # On Windows, use the submodule boost
-    # Boost submodules have headers in libs/*/include/
     file(GLOB BOOST_INCLUDE_SUBDIRS "${CMAKE_SOURCE_DIR}/external/boost/libs/*/include")
-    
-    # Numeric has nested sub-libraries (conversion, interval, odeint, etc.)
     file(GLOB BOOST_NUMERIC_SUBDIRS "${CMAKE_SOURCE_DIR}/external/boost/libs/numeric/*/include")
-    
-    set(Boost_INCLUDE_DIRS ${BOOST_INCLUDE_SUBDIRS} ${BOOST_NUMERIC_SUBDIRS})
-    list(LENGTH Boost_INCLUDE_DIRS BOOST_LIB_COUNT)
-    message(STATUS "Using Boost submodule with ${BOOST_LIB_COUNT} library includes")
+
+    target_include_directories(boost_headers INTERFACE
+        ${BOOST_INCLUDE_SUBDIRS}
+        ${BOOST_NUMERIC_SUBDIRS}
+    )
+
+    message(STATUS "Using Boost submodule (Windows)")
 else()
-    # On Linux, prefer system Boost first, fallback to submodule
     find_package(Boost QUIET)
-    if(Boost_FOUND)
-        message(STATUS "Found system Boost: ${Boost_INCLUDE_DIRS}")
+
+    if(Boost_FOUND AND EXISTS "${Boost_INCLUDE_DIRS}/boost/beast")
+        target_include_directories(boost_headers INTERFACE ${Boost_INCLUDE_DIRS})
+        message(STATUS "Using system Boost: ${Boost_INCLUDE_DIRS}")
     else()
-        # Use submodule if system Boost not found
-        set(Boost_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/external/boost")
-        message(STATUS "System Boost not found, using submodule: ${Boost_INCLUDE_DIRS}")
+        file(GLOB BOOST_INCLUDE_SUBDIRS "${CMAKE_SOURCE_DIR}/external/boost/libs/*/include")
+        file(GLOB BOOST_NUMERIC_SUBDIRS "${CMAKE_SOURCE_DIR}/external/boost/libs/numeric/*/include")
+
+        message(STATUS "BOOST_INCLUDE_SUBDIRS = ${BOOST_INCLUDE_SUBDIRS}")
+
+        target_include_directories(boost_headers INTERFACE
+            ${BOOST_INCLUDE_SUBDIRS}
+            ${BOOST_NUMERIC_SUBDIRS}
+        )
+
+        message(STATUS "Using Boost submodule (Linux fallback)")
     endif()
 endif()
-
 # Define BOOST/ASIO preprocessor definitions
 if(WIN32)
     add_compile_definitions(
@@ -157,7 +170,7 @@ add_executable(app ${APP_SOURCES} ${APP_HEADERS})
 
 # Configure includes - Boost MUST come before libraries/include
 target_include_directories(app PRIVATE
-    ${Boost_INCLUDE_DIRS}  # Boost first to override any stale headers
+    # ${Boost_INCLUDE_DIRS}  # Boost first to override any stale headers
     ${IMGUI_DIR}
     ${IMGUI_DIR}/backends
     ${CMAKE_SOURCE_DIR}/src
@@ -193,19 +206,19 @@ else()
         ${CMAKE_SOURCE_DIR}/external/glfw/include
     )
     
-    # Linux linking
-    target_link_libraries(app PRIVATE
-        imgui
-        glad
-        glfw               # Use the glfw target from add_subdirectory
-        GL                 # OpenGL library
-        pthread            # Required for threads (used by ASIO)
-        X11                # X11 library (required by GLFW)
-        Xrandr             # X11 Randr extension
-        Xinerama           # X11 Xinerama extension
-        Xcursor            # X11 Cursor extension
-        Xi                 # X11 Input extension
-    )
+target_link_libraries(app PRIVATE
+    boost_headers   # 🔥 THIS IS REQUIRED
+    imgui
+    glad
+    glfw
+    GL
+    pthread
+    X11
+    Xrandr
+    Xinerama
+    Xcursor
+    Xi
+)
     
     # Enable warnings on GCC/Clang
     target_compile_options(app PRIVATE -Wall -Wextra)
