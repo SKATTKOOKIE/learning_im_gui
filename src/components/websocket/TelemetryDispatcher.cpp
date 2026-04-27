@@ -1,7 +1,8 @@
-#include "components/websocket/TelemetryDispatcher.h"
+#include "TelemetryDispatcher.h"
 #include "components/websocket/WebSocketClient.h"
 #include "components/ConnectionController/ConnectionController.h"
 #include "components/ControlModeController/ControlModeController.h"
+#include "components/JointPositionController/JointPositionController.h"
 #include <iostream>
 #include <cstdio>
 
@@ -18,6 +19,11 @@ void TelemetryDispatcher::RegisterConnectionController(std::shared_ptr<Connectio
 void TelemetryDispatcher::RegisterControlModeController(std::shared_ptr<ControlModeController> controller)
 {
     controlModeController_ = std::move(controller);
+}
+
+void TelemetryDispatcher::RegisterJointPositionController(std::shared_ptr<JointPositionController> controller)
+{
+    jointPositionController_ = std::move(controller);
 }
 
 int TelemetryDispatcher::ExtractTelemetryType(const std::string& message) const
@@ -51,7 +57,7 @@ void TelemetryDispatcher::Update()
     std::string message;
     while (wsTelemetryClient_->PollMessage(message))
     {
-        std::cout << "TelemetryDispatcher received: " << message << "\n";
+        // std::cout << "TelemetryDispatcher received: " << message << "\n";
         
         int telemetryType = ExtractTelemetryType(message);
         
@@ -61,7 +67,7 @@ void TelemetryDispatcher::Update()
             case 1:  // Connection telemetry
                 if (connectionController_)
                 {
-                    std::cout << "TelemetryDispatcher: Routing to ConnectionController\n";
+                    // std::cout << "TelemetryDispatcher: Routing to ConnectionController\n";
                     connectionController_->HandleTelemetry(message);
                 }
                 break;
@@ -69,8 +75,16 @@ void TelemetryDispatcher::Update()
             case 2:  // Control Mode telemetry
                 if (controlModeController_)
                 {
-                    std::cout << "TelemetryDispatcher: Routing to ControlModeController\n";
+                    // std::cout << "TelemetryDispatcher: Routing to ControlModeController\n";
                     controlModeController_->HandleTelemetry(message);
+                }
+                break;
+                
+            case 3:  // Joint Position telemetry
+                if (jointPositionController_)
+                {
+                    std::cout << "TelemetryDispatcher: Routing to JointPositionController\n";
+                    jointPositionController_->HandleTelemetry(message);
                 }
                 break;
                 

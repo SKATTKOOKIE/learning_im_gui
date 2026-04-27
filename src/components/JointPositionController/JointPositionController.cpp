@@ -2,6 +2,7 @@
 #include "components/websocket/WebSocketClient.h"
 #include "components/websocket/MessageBuilder.h"
 #include <iostream>
+#include <cstdio>
 
 JointPositionController::JointPositionController(std::shared_ptr<WebSocketClient> client)
     : wsClient_(std::move(client))
@@ -67,6 +68,84 @@ void JointPositionController::SendJointCommand(int jointIndex, float position, f
     std::cout << "JointPositionController: Message: " << message << "\n";
 
     wsClient_->Send(message);
+}
+
+void JointPositionController::HandleTelemetry(const std::string& message)
+{
+    // Parse joint position telemetry
+    // Expected format: {"telemetry": {"type": 3, "data": {"joint": <int>, "velocity": <float>, "position": <float>, "torque": <float>}}}
+    
+    std::cout << "JointPositionController: Received telemetry: " << message << "\n";
+    
+    // Extract joint index
+    const std::string jointSearch = "\"joint\":";
+    size_t jointPos = message.find(jointSearch);
+    if (jointPos == std::string::npos)
+    {
+        std::cout << "JointPositionController: No 'joint' field found\n";
+        return;
+    }
+    
+    jointPos += jointSearch.size();
+    int jointIndex = 0;
+    if (sscanf(message.c_str() + jointPos, "%d", &jointIndex) != 1)
+    {
+        std::cout << "JointPositionController: Failed to parse joint index\n";
+        return;
+    }
+    
+    if (jointIndex < 0 || jointIndex >= NUM_JOINTS)
+    {
+        std::cout << "JointPositionController: Invalid joint index: " << jointIndex << "\n";
+        return;
+    }
+    
+    // Extract position
+    const std::string posSearch = "\"position\":";
+    size_t posPos = message.find(posSearch);
+    if (posPos == std::string::npos)
+    {
+        std::cout << "JointPositionController: No 'position' field found\n";
+        return;
+    }
+    
+    posPos += posSearch.size();
+    float position = 0.0f;
+    if (sscanf(message.c_str() + posPos, "%f", &position) != 1)
+    {
+        std::cout << "JointPositionController: Failed to parse position\n";
+        return;
+    }
+    
+    // Extract velocity
+    const std::string velSearch = "\"velocity\":";
+    size_t velPos = message.find(velSearch);
+    float velocity = 0.0f;
+    if (velPos != std::string::npos)
+    {
+        velPos += velSearch.size();
+        sscanf(message.c_str() + velPos, "%f", &velocity);
+    }
+    
+    // Extract torque
+    const std::string torqueSearch = "\"torque\":";
+    size_t torquePos = message.find(torqueSearch);
+    float torque = 0.0f;
+    if (torquePos != std::string::npos)
+    {
+        torquePos += torqueSearch.size();
+        sscanf(message.c_str() + torquePos, "%f", &torque);
+    }
+    
+    // Update internal state
+    jointPositions_[jointIndex] = position;
+    jointVelocities_[jointIndex] = velocity;
+    jointTorques_[jointIndex] = torque;
+    
+    std::cout << "JointPositionController: Updated joint " << jointIndex 
+              << " - position: " << position 
+              << ", velocity: " << velocity 
+              << ", torque: " << torque << "\n";
 }
 
 void JointPositionController::Update()

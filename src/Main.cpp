@@ -69,6 +69,7 @@ int main()
     auto telemetryDispatcher = std::make_shared<TelemetryDispatcher>(wsTelemetryClient);
     telemetryDispatcher->RegisterConnectionController(connectionController);
     telemetryDispatcher->RegisterControlModeController(controlModeController);
+    telemetryDispatcher->RegisterJointPositionController(jointPositionController);
 
     // --- Layout Manager and Components ---
     auto layoutManager = std::make_shared<LayoutManager>();

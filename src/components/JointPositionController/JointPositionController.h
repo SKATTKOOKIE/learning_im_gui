@@ -14,6 +14,7 @@ public:
     explicit JointPositionController(std::shared_ptr<WebSocketClient> client);
 
     void SetJointPosition(int jointIndex, float position, float velocity, float torque);
+    void HandleTelemetry(const std::string& message);  // ← NEW
     void Update();
 
     float GetJointPosition(int jointIndex) const;

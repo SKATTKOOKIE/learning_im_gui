@@ -20,6 +20,19 @@ void TestVerticalSlider::SetController(std::shared_ptr<JointPositionController> 
 void TestVerticalSlider::Render()
 {
     ImGui::Begin("Joint Control");
+
+    if (controller_)
+    {
+        if (ImGui::Button("Update to arm position"))
+        {
+            for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
+            {
+                joint_position[i] = controller_->GetJointPosition(i);
+                joint_velocity[i] = controller_->GetJointVelocity(i);
+                joint_torque[i]   = controller_->GetJointTorque(i);
+            }
+        }
+    }
     
     if (ImGui::BeginTable("JointSliders", NUM_JOINTS, ImGuiTableFlags_SizingFixedFit))
     {
