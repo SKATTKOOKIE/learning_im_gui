@@ -238,6 +238,13 @@ public:
         Disconnected = 2,
     };
 
+    enum class ControlModeState
+    {
+        Unknown = 0,
+        Standby = 1,
+        Active = 2,
+    };
+
     static bool TryParseConnectionState(const std::string& jsonStr, ConnectionState& state)
     {
         if (jsonStr.find("\"telemetry\"") == std::string::npos)
@@ -280,4 +287,53 @@ public:
 
         return true;
     }
+
+
+    static bool TryParseControlModeState(const std::string& jsonStr, ControlModeState& state)
+    {
+        if (jsonStr.find("\"telemetry\"") == std::string::npos)
+            return false;
+            
+        // --- Extract type ---
+        const std::string typeSearch = "\"type\":";
+        size_t typePos = jsonStr.find(typeSearch);
+        if (typePos == std::string::npos)
+            return false;
+            
+        typePos += typeSearch.size();
+        int typeValue = 0;
+        // Fixed: Compare sscanf return value with 1 (successful parse), not the parsed value
+        if (sscanf(jsonStr.c_str() + typePos, "%d", &typeValue) != 1)
+        {
+            return false;
+        }
+            
+        if (typeValue != static_cast<int>(TelemetryType::ControlMode))
+        {
+            return false;
+        }
+            
+        // --- Extract state ---
+        const std::string stateSearch = "\"state\":";
+        size_t statePos = jsonStr.find(stateSearch);
+        if (statePos == std::string::npos)
+            return false;
+            
+        statePos += stateSearch.size();
+        int stateValue = 0;
+        // Fixed: Compare sscanf return value with 1 (successful parse), not the parsed value
+        if (sscanf(jsonStr.c_str() + statePos, "%d", &stateValue) != 1)
+            return false;
+            
+        switch (stateValue)
+        {
+            case 0: state = ControlModeState::Unknown; break;
+            case 1: state = ControlModeState::Standby; break;
+            case 2: state = ControlModeState::Active; break;
+            default: return false;
+        }
+        
+        return true;
+    }
+
 };

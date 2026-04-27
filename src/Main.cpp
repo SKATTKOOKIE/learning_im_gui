@@ -10,6 +10,7 @@
 #include "components/ControlModeView/ControlModeView.h"
 #include "components/TestVerticalSlider/TestVerticalSlider.h"
 #include "components/JointPositionController/JointPositionController.h"
+#include "components/websocket/TelemetryDispatcher.h"
 #include <memory>
 #include <iostream>
 #include "imgui_demo.cpp"
@@ -51,12 +52,11 @@ int main()
     }
 
     // --- Connection Controller and View ---
-    // Pass both command and telemetry clients to controller
     auto connectionController = std::make_shared<ConnectionController>(wsCommandClient, wsTelemetryClient);
     auto connectionView       = std::make_shared<ConnectionView>(connectionController);
 
     // --- Control Mode Controller and View ---
-    auto controlModeController = std::make_shared<ControlModeController>(wsCommandClient);
+    auto controlModeController = std::make_shared<ControlModeController>(wsCommandClient, wsTelemetryClient);
     auto controlModeView       = std::make_shared<ControlModeView>(controlModeController);
 
     // --- Joint Position Controller ---
@@ -65,12 +65,17 @@ int main()
     // --- Create WebSocket Monitors ---
     auto wsCommandMonitor   = std::make_shared<WebSocketMonitor>(wsCommandClient);
 
+    // --- Create Telemetry Dispatcher ---
+    auto telemetryDispatcher = std::make_shared<TelemetryDispatcher>(wsTelemetryClient);
+    telemetryDispatcher->RegisterConnectionController(connectionController);
+    telemetryDispatcher->RegisterControlModeController(controlModeController);
+
     // --- Layout Manager and Components ---
     auto layoutManager = std::make_shared<LayoutManager>();
     auto testComponent = std::make_shared<TestComponent>();
 
     auto verticalSlider = std::make_shared<TestVerticalSlider>();
-    verticalSlider->SetController(jointPositionController);  // Connect the controller to the view
+    verticalSlider->SetController(jointPositionController);
 
     auto configurationModal = std::make_shared<ConfigurationModalComponent>();
     layoutManager->AddWidget(DockZone::Right, configurationModal);
@@ -85,11 +90,14 @@ int main()
     // --- Set Update Callback ---
     app.SetUpdateCallback([&]() 
     {
+        // Dispatch all telemetry messages first
+        telemetryDispatcher->Update();
+        
+        // Then update views
         wsCommandMonitor->Update();
-        connectionController->Update();
         connectionView->Draw();
         controlModeView->Draw();
-        jointPositionController->Update();  // Poll for responses from device
+        jointPositionController->Update();
     });
 
     // --- Run Application ---

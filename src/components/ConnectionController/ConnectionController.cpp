@@ -32,23 +32,9 @@ void ConnectionController::SendCommand(int commandValue)
     wsClient_->Send(message);
 }
 
-void ConnectionController::Update()
-{
-    if (!wsTelemetryClient_)
-        return;
-
-    std::string message;
-
-    while (wsTelemetryClient_->PollMessage(message))
-    {
-        HandleTelemetry(message);
-    }
-}
-
 void ConnectionController::HandleTelemetry(const std::string& message)
 {
     TelemetryMessageParser::ConnectionState telemetryState;
-
 
     if (!TelemetryMessageParser::TryParseConnectionState(message, telemetryState))
     {

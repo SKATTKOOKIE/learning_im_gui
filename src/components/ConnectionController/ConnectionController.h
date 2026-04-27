@@ -1,9 +1,9 @@
 #pragma once
 
-#include "components/websocket/WebSocketClient.h"
-#include <atomic>
 #include <memory>
 #include <string>
+
+class WebSocketClient;
 
 enum class ConnectionState
 {
@@ -15,29 +15,19 @@ enum class ConnectionState
 class ConnectionController
 {
 public:
-    explicit ConnectionController(std::shared_ptr<WebSocketClient> client,
-                                  std::shared_ptr<WebSocketClient> telemetryClient = nullptr);
-
+    ConnectionController(std::shared_ptr<WebSocketClient> client,
+                        std::shared_ptr<WebSocketClient> telemetryClient);
+    
     void Connect();
     void Disconnect();
-    void Update();
-
-    [[nodiscard]] ConnectionState GetState() const { return state_; }
-    [[nodiscard]] const std::string& GetLastError() const { return lastError_; }
-
-    // Set the telemetry client after construction if needed
-    void SetTelemetryClient(std::shared_ptr<WebSocketClient> telemetryClient)
-    {
-        wsTelemetryClient_ = std::move(telemetryClient);
-    }
+    void HandleTelemetry(const std::string& message);
+    
+    ConnectionState GetState() const { return state_; }
 
 private:
-    void SendCommand(int commandValue);
-    void HandleResponse(const std::string& message);
-    void HandleTelemetry(const std::string& message);
-
     std::shared_ptr<WebSocketClient> wsClient_;
     std::shared_ptr<WebSocketClient> wsTelemetryClient_;
-    std::atomic<ConnectionState> state_ = ConnectionState::Unknown;
-    std::string lastError_;
+    ConnectionState state_ = ConnectionState::Unknown;
+    
+    void SendCommand(int commandValue);
 };
