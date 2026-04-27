@@ -8,6 +8,8 @@
 #include "components/ConnectionView/ConnectionView.h"
 #include "components/ControlModeController/ControlModeController.h"
 #include "components/ControlModeView/ControlModeView.h"
+#include "components/TestVerticalSlider/TestVerticalSlider.h"
+#include "components/JointPositionController/JointPositionController.h"
 #include <memory>
 #include <iostream>
 #include "imgui_demo.cpp"
@@ -23,7 +25,7 @@ int main()
     // --- WebSocket Clients Setup ---
     
     // Command port (8765)
-    auto wsCommandClient = std::make_shared<WebSocketClient>("172.19.170.243", "8765");
+    auto wsCommandClient = std::make_shared<WebSocketClient>("172.19.171.48", "8765");
     wsCommandClient->Start();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     if (wsCommandClient->IsConnected())
@@ -36,7 +38,7 @@ int main()
     }
 
     // Telemetry port (8766)
-    auto wsTelemetryClient = std::make_shared<WebSocketClient>("172.19.170.243", "8766");
+    auto wsTelemetryClient = std::make_shared<WebSocketClient>("172.19.171.48", "8766");
     wsTelemetryClient->Start();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     if (wsTelemetryClient->IsConnected())
@@ -49,20 +51,26 @@ int main()
     }
 
     // --- Connection Controller and View ---
-    auto connectionController = std::make_shared<ConnectionController>(wsCommandClient);
+    // Pass both command and telemetry clients to controller
+    auto connectionController = std::make_shared<ConnectionController>(wsCommandClient, wsTelemetryClient);
     auto connectionView       = std::make_shared<ConnectionView>(connectionController);
 
-    // --- Connection Controller and View ---
+    // --- Control Mode Controller and View ---
     auto controlModeController = std::make_shared<ControlModeController>(wsCommandClient);
     auto controlModeView       = std::make_shared<ControlModeView>(controlModeController);
 
+    // --- Joint Position Controller ---
+    auto jointPositionController = std::make_shared<JointPositionController>(wsCommandClient);
+
     // --- Create WebSocket Monitors ---
     auto wsCommandMonitor   = std::make_shared<WebSocketMonitor>(wsCommandClient);
-    auto wsTelemetryMonitor = std::make_shared<WebSocketMonitor>(wsTelemetryClient);
 
     // --- Layout Manager and Components ---
     auto layoutManager = std::make_shared<LayoutManager>();
     auto testComponent = std::make_shared<TestComponent>();
+
+    auto verticalSlider = std::make_shared<TestVerticalSlider>();
+    verticalSlider->SetController(jointPositionController);  // Connect the controller to the view
 
     auto configurationModal = std::make_shared<ConfigurationModalComponent>();
     layoutManager->AddWidget(DockZone::Right, configurationModal);
@@ -70,17 +78,18 @@ int main()
     // Add widgets to layout
     layoutManager->AddWidget(DockZone::Left, testComponent);
     layoutManager->AddWidget(DockZone::Bottom, wsCommandMonitor);
-    layoutManager->AddWidget(DockZone::Bottom, wsTelemetryMonitor);
+    layoutManager->AddWidget(DockZone::Right, verticalSlider);
 
     app.AddComponent(layoutManager);
 
     // --- Set Update Callback ---
-    app.SetUpdateCallback([&]() {
+    app.SetUpdateCallback([&]() 
+    {
         wsCommandMonitor->Update();
-        wsTelemetryMonitor->Update();
         connectionController->Update();
         connectionView->Draw();
         controlModeView->Draw();
+        jointPositionController->Update();  // Poll for responses from device
     });
 
     // --- Run Application ---

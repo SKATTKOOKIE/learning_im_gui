@@ -19,3 +19,4 @@ private:
     std::shared_ptr<ConnectionController> controller_;
     bool isOpen_ = true;
 };
+

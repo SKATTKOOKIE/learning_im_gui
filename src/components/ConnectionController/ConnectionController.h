@@ -1,13 +1,10 @@
 #pragma once
 
+#include "components/websocket/WebSocketClient.h"
+#include <atomic>
 #include <memory>
 #include <string>
-#include <atomic>
-#include "components/websocket/MessageBuilder.h"
 
-class WebSocketClient;
-
-// Map our local enum to the IDL enum values
 enum class ConnectionState
 {
     Unknown = 0,
@@ -15,26 +12,35 @@ enum class ConnectionState
     Disconnected = 2,
     Connecting = 3,
     Disconnecting = 4,
-    Error = 5  // Local-only state
+    Error = 5
 };
 
 class ConnectionController
 {
 public:
-    explicit ConnectionController(std::shared_ptr<WebSocketClient> client);
+    explicit ConnectionController(std::shared_ptr<WebSocketClient> client,
+                                  std::shared_ptr<WebSocketClient> telemetryClient = nullptr);
 
     void Connect();
     void Disconnect();
     void Update();
 
-    ConnectionState GetState() const { return state_; }
-    const std::string& GetLastError() const { return lastError_; }
+    [[nodiscard]] ConnectionState GetState() const { return state_; }
+    [[nodiscard]] const std::string& GetLastError() const { return lastError_; }
+
+    // Set the telemetry client after construction if needed
+    void SetTelemetryClient(std::shared_ptr<WebSocketClient> telemetryClient)
+    {
+        wsTelemetryClient_ = std::move(telemetryClient);
+    }
 
 private:
-    void SendCommand(int commandValue); // 0=query, 1=connect, 2=disconnect
+    void SendCommand(int commandValue);
     void HandleResponse(const std::string& message);
+    void HandleTelemetry(const std::string& message);
 
     std::shared_ptr<WebSocketClient> wsClient_;
-    std::atomic<ConnectionState> state_{ ConnectionState::Disconnected };
+    std::shared_ptr<WebSocketClient> wsTelemetryClient_;
+    std::atomic<ConnectionState> state_ = ConnectionState::Unknown;
     std::string lastError_;
 };

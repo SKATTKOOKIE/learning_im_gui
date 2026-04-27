@@ -1,9 +1,13 @@
 #include "ConnectionController.h"
 #include "components/websocket/WebSocketClient.h"
 #include <iostream>
+#include <nlohmann/json.hpp>
 
-ConnectionController::ConnectionController(std::shared_ptr<WebSocketClient> client)
-    : wsClient_(std::move(client))
+using json = nlohmann::json;
+
+ConnectionController::ConnectionController(std::shared_ptr<WebSocketClient> client,
+                                           std::shared_ptr<WebSocketClient> telemetryClient)
+    : wsClient_(std::move(client)), wsTelemetryClient_(std::move(telemetryClient))
 {
 }
 
@@ -40,9 +44,17 @@ void ConnectionController::Update()
     if (!wsClient_)
         return;
 
+    // Poll command responses
     std::string message;
     while (wsClient_->PollMessage(message))
         HandleResponse(message);
+
+    // Poll telemetry messages
+    if (wsTelemetryClient_)
+    {
+        while (wsTelemetryClient_->PollMessage(message))
+            HandleTelemetry(message);
+    }
 }
 
 void ConnectionController::HandleResponse(const std::string& message)
@@ -128,4 +140,57 @@ void ConnectionController::HandleResponse(const std::string& message)
     }
     
     std::cout << "ConnectionController: New state: " << static_cast<int>(state_.load()) << "\n\n";
+}
+
+void ConnectionController::HandleTelemetry(const std::string& message)
+{
+    try
+    {
+        auto jsonMsg = json::parse(message);
+
+        // Check if this is a telemetry message
+        if (jsonMsg.contains("telemetry") && jsonMsg["telemetry"].contains("data"))
+        {
+            const auto& data = jsonMsg["telemetry"]["data"];
+            
+            if (data.contains("state"))
+            {
+                int telemetryState = data["state"].get<int>();
+                
+                std::cout << "ConnectionController: Received telemetry state: " << telemetryState << "\n";
+                
+                // Map telemetry state to ConnectionState
+                ConnectionState newState = ConnectionState::Unknown;
+                
+                switch (telemetryState)
+                {
+                    case 0:
+                        newState = ConnectionState::Unknown;
+                        break;
+                    case 1:
+                        newState = ConnectionState::Connected;
+                        break;
+                    case 2:
+                        newState = ConnectionState::Disconnected;
+                        break;
+                    default:
+                        std::cout << "ConnectionController: Unknown telemetry state: " << telemetryState << "\n";
+                        return;
+                }
+                
+                // Update state from telemetry
+                state_ = newState;
+                std::cout << "ConnectionController: State updated from telemetry to: " << static_cast<int>(newState) << "\n";
+            }
+        }
+    }
+    catch (const json::exception& e)
+    {
+        // Not a JSON message or not telemetry format - ignore silently
+        std::cout << "ConnectionController: Telemetry parse error (expected): " << e.what() << "\n";
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "ConnectionController: Unexpected error parsing telemetry: " << e.what() << "\n";
+    }
 }
