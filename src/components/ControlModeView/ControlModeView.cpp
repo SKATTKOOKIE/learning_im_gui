@@ -30,9 +30,9 @@ void ControlModeView::DrawStateIndicator() const
     struct StateStyle { ImVec4 colour; const char* label; };
     
     static constexpr StateStyle styles[] = {
-        { { 0.5f, 0.5f, 0.5f, 1.0f }, "● UNKNOWN"          },  // 0 - Unknown
-        { { 0.0f, 1.0f, 0.0f, 1.0f }, "● STANDBY"        },  // 1 - Standby
-        { { 0.5f, 0.5f, 0.5f, 1.0f }, "● ACTIVE"     },  // 2 - Active
+        { { 0.5f, 0.5f, 0.5f, 1.0f }, "CONTROL MODE : UNKNOWN"          },  // 0 - Unknown
+        { { 1.0f, 1.0f, 1.0f, 1.0f }, "CONTROL MODE : STANDBY"        },  // 1 - Standby
+        { { 0.0f, 1.0f, 1.0f, 1.0f }, "CONTROL MODE : ACTIVE"     },  // 2 - Active
     };
     
     int stateIndex = static_cast<int>(state);

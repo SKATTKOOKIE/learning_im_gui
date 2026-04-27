@@ -4,9 +4,9 @@
 #include <string>
 
 TestVerticalSlider::TestVerticalSlider()
-    : joint_position{0, 0, 0, 0, 0, 0, 0},
-      joint_velocity{24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f},
-      joint_torque{50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f}
+: joint_position{0, 0, 0, 0, 0, 0, 0},
+joint_velocity{24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f},
+joint_torque{50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f}
 {
 }
 
@@ -20,7 +20,6 @@ void TestVerticalSlider::SetController(std::shared_ptr<JointPositionController> 
 void TestVerticalSlider::Render()
 {
     ImGui::Begin("Joint Control");
-
     if (controller_)
     {
         if (ImGui::Button("Update to arm position"))
@@ -29,11 +28,18 @@ void TestVerticalSlider::Render()
             {
                 joint_position[i] = controller_->GetJointPosition(i);
                 joint_velocity[i] = controller_->GetJointVelocity(i);
-                joint_torque[i]   = controller_->GetJointTorque(i);
+                joint_torque[i] = controller_->GetJointTorque(i);
             }
         }
     }
+
+    // Store original style and modify for slider handle height
+    ImGuiStyle& style = ImGui::GetStyle();
+    float originalGrabMinSize = style.GrabMinSize;
     
+    // Increase grab size (this affects slider handle height)
+    style.GrabMinSize = 20.0f; // Adjust this value to change handle height
+
     if (ImGui::BeginTable("JointSliders", NUM_JOINTS, ImGuiTableFlags_SizingFixedFit))
     {
         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
@@ -81,6 +87,9 @@ void TestVerticalSlider::Render()
         }
         ImGui::EndTable();
     }
+    
+    // Restore original style
+    style.GrabMinSize = originalGrabMinSize;
     
     ImGui::End();
 }

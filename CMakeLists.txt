@@ -218,7 +218,7 @@ else()
     
     target_link_libraries(app PRIVATE
         nlohmann_json
-        boost_headers   # 🔥 THIS IS REQUIRED
+        boost_headers
         imgui
         glad
         glfw

@@ -84,7 +84,7 @@ int main()
     // Add widgets to layout
     layoutManager->AddWidget(DockZone::Left, testComponent);
     layoutManager->AddWidget(DockZone::Bottom, wsCommandMonitor);
-    layoutManager->AddWidget(DockZone::Right, verticalSlider);
+    layoutManager->AddWidget(DockZone::Center, verticalSlider);
 
     app.AddComponent(layoutManager);
 
