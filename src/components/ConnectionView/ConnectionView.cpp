@@ -11,7 +11,7 @@ void ConnectionView::Close() { isOpen_ = false; }
 void ConnectionView::Draw()
 {
     ImGui::SetNextWindowSize({ 320, 160 }, ImGuiCond_FirstUseEver);
-    if (!isOpen_ || !ImGui::Begin("Connection###ConnectionView", &isOpen_,
+    if (!isOpen_ || !ImGui::Begin("EMANIP Connection###ConnectionView", &isOpen_,
         ImGuiWindowFlags_NoCollapse))
         return;
 
@@ -33,9 +33,6 @@ void ConnectionView::DrawStateIndicator() const
         { { 0.5f, 0.5f, 0.5f, 1.0f }, "● UNKNOWN"          },  // 0 - Unknown
         { { 0.0f, 1.0f, 0.0f, 1.0f }, "● CONNECTED"        },  // 1 - Connected
         { { 0.5f, 0.5f, 0.5f, 1.0f }, "● DISCONNECTED"     },  // 2 - Disconnected
-        { { 1.0f, 0.8f, 0.0f, 1.0f }, "◌ CONNECTING..."    },  // 3 - Connecting
-        { { 1.0f, 0.6f, 0.0f, 1.0f }, "◌ DISCONNECTING..." },  // 4 - Disconnecting
-        { { 1.0f, 0.2f, 0.2f, 1.0f }, "✕ ERROR"            },  // 5 - Error
     };
     
     int stateIndex = static_cast<int>(state);
@@ -44,14 +41,6 @@ void ConnectionView::DrawStateIndicator() const
     
     const auto& s = styles[stateIndex];
     ImGui::TextColored(s.colour, "%s", s.label);
-    
-    if (state == ConnectionState::Error && !controller_->GetLastError().empty())
-    {
-        ImGui::SameLine();
-        ImGui::TextDisabled("(?)");
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-            ImGui::SetTooltip("%s", controller_->GetLastError().c_str());
-    }
 }
 
 void ConnectionView::DrawButtons()

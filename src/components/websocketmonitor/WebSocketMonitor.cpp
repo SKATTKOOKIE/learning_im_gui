@@ -16,7 +16,7 @@ void WebSocketMonitor::Render()
     ImGui::Begin("WebSocket Monitor");
 
     // Connection status section
-    ImGui::Text("Connection Status:");
+    ImGui::Text("API Command Connection Status:");
     ImGui::SameLine();
     if (wsClient_->IsConnected())
     {
@@ -29,33 +29,33 @@ void WebSocketMonitor::Render()
 
     ImGui::Separator();
 
-    // Message input section
-    ImGui::Text("Send Message:");
-    ImGui::PushItemWidth(-100);
-    bool enterPressed = ImGui::InputText("##input", inputBuffer_, sizeof(inputBuffer_), 
-                                         ImGuiInputTextFlags_EnterReturnsTrue);
-    ImGui::PopItemWidth();
+    // // Message input section
+    // ImGui::Text("Send Message:");
+    // ImGui::PushItemWidth(-100);
+    // bool enterPressed = ImGui::InputText("##input", inputBuffer_, sizeof(inputBuffer_), 
+    //                                      ImGuiInputTextFlags_EnterReturnsTrue);
+    // ImGui::PopItemWidth();
     
-    ImGui::SameLine();
-    bool sendClicked = ImGui::Button("Send");
+    // ImGui::SameLine();
+    // bool sendClicked = ImGui::Button("Send");
 
-    if ((enterPressed || sendClicked) && strlen(inputBuffer_) > 0)
-    {
-        std::string msg(inputBuffer_);
-        wsClient_->Send(msg);
-        AddMessage(msg, true);
-        memset(inputBuffer_, 0, sizeof(inputBuffer_));
-    }
+    // if ((enterPressed || sendClicked) && strlen(inputBuffer_) > 0)
+    // {
+    //     std::string msg(inputBuffer_);
+    //     wsClient_->Send(msg);
+    //     AddMessage(msg, true);
+    //     memset(inputBuffer_, 0, sizeof(inputBuffer_));
+    // }
 
-    // Quick test buttons
-    ImGui::SameLine();
-    if (ImGui::Button("Ping"))
-    {
-        wsClient_->Send("ping");
-        AddMessage("ping", true);
-    }
+    // // Quick test buttons
+    // ImGui::SameLine();
+    // if (ImGui::Button("Ping"))
+    // {
+    //     wsClient_->Send("ping");
+    //     AddMessage("ping", true);
+    // }
 
-    ImGui::Separator();
+    // ImGui::Separator();
 
     // Options
     ImGui::Checkbox("Auto-scroll", &autoScroll_);

@@ -236,32 +236,48 @@ public:
         Unknown = 0,
         Connected = 1,
         Disconnected = 2,
-        Connecting = 3,
-        Disconnecting = 4
     };
 
     static bool TryParseConnectionState(const std::string& jsonStr, ConnectionState& state)
     {
-        // Expected format: {"telemetry": {"type": 1, "data": {"state": <int>, "state_name": "<str>"}}}
-        
         if (jsonStr.find("\"telemetry\"") == std::string::npos)
             return false;
-        
-        if (jsonStr.find("\"type\":1") == std::string::npos)
+
+        // --- Extract type ---
+        const std::string typeSearch = "\"type\":";
+        size_t typePos = jsonStr.find(typeSearch);
+        if (typePos == std::string::npos)
             return false;
-        
-        // Extract state value
+
+        typePos += typeSearch.size();
+
+        int typeValue = 0;
+        if (sscanf(jsonStr.c_str() + typePos, "%d", &typeValue) != 1)
+            return false;
+
+        if (typeValue != 1)
+            return false;
+
+        // --- Extract state ---
         const std::string stateSearch = "\"state\":";
         size_t statePos = jsonStr.find(stateSearch);
         if (statePos == std::string::npos)
             return false;
-        
+
         statePos += stateSearch.size();
+
         int stateValue = 0;
         if (sscanf(jsonStr.c_str() + statePos, "%d", &stateValue) != 1)
             return false;
-        
-        state = static_cast<ConnectionState>(stateValue);
+
+        switch (stateValue)
+        {
+            case 0: state = ConnectionState::Unknown; break;
+            case 1: state = ConnectionState::Connected; break;
+            case 2: state = ConnectionState::Disconnected; break;
+            default: return false;
+        }
+
         return true;
     }
 };

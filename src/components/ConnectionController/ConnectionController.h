@@ -10,9 +10,6 @@ enum class ConnectionState
     Unknown = 0,
     Connected = 1,
     Disconnected = 2,
-    Connecting = 3,
-    Disconnecting = 4,
-    Error = 5
 };
 
 class ConnectionController

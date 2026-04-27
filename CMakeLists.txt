@@ -10,6 +10,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # -----------------
+# NLOHMANN JSON (Header-only from submodule)
+# -----------------
+add_library(nlohmann_json INTERFACE)
+target_include_directories(nlohmann_json INTERFACE 
+    ${CMAKE_SOURCE_DIR}/external/nlohmann_json/include
+)
+message(STATUS "Using nlohmann/json from submodule: ${CMAKE_SOURCE_DIR}/external/nlohmann_json/include")
+
+# -----------------
 # BOOST (Header-only for Beast/ASIO)
 # -----------------
 # Only set policy if CMake version supports it (3.30+)
@@ -186,6 +195,7 @@ endif()
 # Platform-specific linking
 if(WIN32)
     target_link_libraries(app PRIVATE
+        nlohmann_json
         imgui
         glad
         ${GLFW_LIBRARY}
@@ -206,19 +216,20 @@ else()
         ${CMAKE_SOURCE_DIR}/external/glfw/include
     )
     
-target_link_libraries(app PRIVATE
-    boost_headers   # 🔥 THIS IS REQUIRED
-    imgui
-    glad
-    glfw
-    GL
-    pthread
-    X11
-    Xrandr
-    Xinerama
-    Xcursor
-    Xi
-)
+    target_link_libraries(app PRIVATE
+        nlohmann_json
+        boost_headers   # 🔥 THIS IS REQUIRED
+        imgui
+        glad
+        glfw
+        GL
+        pthread
+        X11
+        Xrandr
+        Xinerama
+        Xcursor
+        Xi
+    )
     
     # Enable warnings on GCC/Clang
     target_compile_options(app PRIVATE -Wall -Wextra)

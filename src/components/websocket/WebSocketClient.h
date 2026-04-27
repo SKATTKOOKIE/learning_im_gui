@@ -56,5 +56,7 @@ private:
     std::queue<std::string> recvQueue_;
     std::mutex recvMutex_;
 
+    const bool websocketDebug_ = false;
+
     MessageCallback messageCallback_;
 };

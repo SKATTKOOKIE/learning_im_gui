@@ -160,18 +160,18 @@ void WebSocketClient::SendLoop()
                     try
                     {
                         ws_->write(net::buffer(msg));
-                        std::cout << "✓ Successfully sent: " << msg << "\n";
+                        std::cout << "Successfully sent: " << msg << "\n";
                     }
                     catch (const std::exception& e)
                     {
-                        std::cerr << "✗ Write failed: " << e.what() << "\n";
+                        std::cerr << "Write failed: " << e.what() << "\n";
                         connected_ = false;
                         break;
                     }
                 }
                 else
                 {
-                    std::cout << "✗ Cannot send - ws_=" << (ws_ ? "valid" : "null") 
+                    std::cout << "Cannot send - ws_=" << (ws_ ? "valid" : "null") 
                               << " connected_=" << connected_ << "\n";
                 }
             }
@@ -197,8 +197,6 @@ void WebSocketClient::ReceiveLoop()
             beast::flat_buffer buffer;
             beast::error_code ec;
 
-            std::cout << "Waiting for message...\n";
-
             // Read from WebSocket (blocking) - NO MUTEX!
             // Boost.Beast allows one read and one write concurrently
             if (ws_)
@@ -214,7 +212,11 @@ void WebSocketClient::ReceiveLoop()
             if (!ec)
             {
                 std::string msg = beast::buffers_to_string(buffer.data());
-                std::cout << "✓ Received: " << msg << "\n";
+
+                if(websocketDebug_)
+                {
+                    std::cout << "Received: " << msg << "\n";
+                }
 
                 if (messageCallback_)
                     messageCallback_(msg);

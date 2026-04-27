@@ -10,6 +10,8 @@ TestVerticalSlider::TestVerticalSlider()
 {
 }
 
+const int JOINT_ID_START_VALUE = 1;
+
 void TestVerticalSlider::SetController(std::shared_ptr<JointPositionController> controller)
 {
     controller_ = std::move(controller);
@@ -29,7 +31,7 @@ void TestVerticalSlider::Render()
         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
         ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
         
-        for (int i = 0; i < NUM_JOINTS; i++)
+        for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
         {
             ImGui::TableNextColumn();
             
