@@ -19,6 +19,7 @@ class LayoutManager : public UIComponent
 public:
     LayoutManager();
     void Render() override;
+    void SetWindow(GLFWwindow* win) override;
     
     // Add a widget to a specific zone
     void AddWidget(DockZone zone, std::shared_ptr<UIComponent> widget);
@@ -26,6 +27,7 @@ public:
 private:
     void SetupDockingLayout();
     ImGuiID GetDockIDForZone(DockZone zone);
+    
     
     bool first_frame;
     ImGuiID dockspace_id;

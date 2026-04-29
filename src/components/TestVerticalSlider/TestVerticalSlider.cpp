@@ -38,7 +38,7 @@ void TestVerticalSlider::Render()
     float originalGrabMinSize = style.GrabMinSize;
     
     // Increase grab size (this affects slider handle height)
-    style.GrabMinSize = 20.0f; // Adjust this value to change handle height
+    style.GrabMinSize = 25.0f; // Adjust this value to change handle height
 
     if (ImGui::BeginTable("JointSliders", NUM_JOINTS, ImGuiTableFlags_SizingFixedFit))
     {
@@ -60,7 +60,7 @@ void TestVerticalSlider::Render()
             std::string torque_id = "##joint_" + std::to_string(i) + "_torque_input";
             
             // Position slider
-            bool positionChanged = ImGui::VSliderFloat(pos_id.c_str(), ImVec2(60, 120), &joint_position[i], -90.0f, 90.0f);
+            bool positionChanged = ImGui::VSliderFloat(pos_id.c_str(), ImVec2(60, 250), &joint_position[i], -90.0f, 90.0f);
             
             // Position value text (1 decimal place)
             ImGui::Text("%.1f°", joint_position[i]);

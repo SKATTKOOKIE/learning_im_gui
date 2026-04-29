@@ -167,6 +167,7 @@ bool Application::InitializeImGui()
 
     // Enable docking
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.IniFilename = nullptr;  // disable imgui.ini — layout is fully programmatic
 
     SetupImGuiStyle();
 
@@ -194,27 +195,27 @@ void Application::BeginFrame()
     ImGui::NewFrame();
 
     // Create a fullscreen dockspace
-    ImGuiViewport *viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(viewport->Size);
-    ImGui::SetNextWindowViewport(viewport->ID);
+    // ImGuiViewport *viewport = ImGui::GetMainViewport();
+    // ImGui::SetNextWindowPos(viewport->Pos);
+    // ImGui::SetNextWindowSize(viewport->Size);
+    // ImGui::SetNextWindowViewport(viewport->ID);
 
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
-                                    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
-                                    ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
-                                    ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
+    // ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar |
+    //                                 ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize |
+    //                                 ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus |
+    //                                 ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_NoBackground;
 
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    // ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    // ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    // ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-    ImGui::Begin("DockSpace", nullptr, window_flags);
-    ImGui::PopStyleVar(3);
+    // ImGui::Begin("DockSpace", nullptr, window_flags);
+    // ImGui::PopStyleVar(3);
 
-    ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
+    // ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
+    // ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
 
-    ImGui::End();
+    // ImGui::End();
 }
 
 void Application::EndFrame()

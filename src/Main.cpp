@@ -1,6 +1,5 @@
 #include "core/Application.h"
 #include "components/layout/LayoutManager.h"
-#include "components/test/TestComponent.h"
 #include "components/ConfigurationModal/ConfigurationModal.h"
 #include "components/websocket/WebSocketClient.h"
 #include "components/websocketmonitor/WebSocketMonitor.h"
@@ -11,6 +10,7 @@
 #include "components/TestVerticalSlider/TestVerticalSlider.h"
 #include "components/JointPositionController/JointPositionController.h"
 #include "components/websocket/TelemetryDispatcher.h"
+#include "components/layout/LeftColumnWidget.h"
 #include <memory>
 #include <iostream>
 #include "imgui_demo.cpp"
@@ -59,6 +59,11 @@ int main()
     auto controlModeController = std::make_shared<ControlModeController>(wsCommandClient, wsTelemetryClient);
     auto controlModeView       = std::make_shared<ControlModeView>(controlModeController);
 
+    auto configurationModal = std::make_shared<ConfigurationModalComponent>();
+
+    // This will hosue connection view and control mode view widgets
+    auto leftColumn = std::make_shared<LeftColumnWidget>(connectionView, controlModeView, configurationModal);
+
     // --- Joint Position Controller ---
     auto jointPositionController = std::make_shared<JointPositionController>(wsCommandClient);
 
@@ -73,16 +78,12 @@ int main()
 
     // --- Layout Manager and Components ---
     auto layoutManager = std::make_shared<LayoutManager>();
-    auto testComponent = std::make_shared<TestComponent>();
 
     auto verticalSlider = std::make_shared<TestVerticalSlider>();
     verticalSlider->SetController(jointPositionController);
-
-    auto configurationModal = std::make_shared<ConfigurationModalComponent>();
-    layoutManager->AddWidget(DockZone::Right, configurationModal);
-
+  
     // Add widgets to layout
-    layoutManager->AddWidget(DockZone::Left, testComponent);
+    layoutManager->AddWidget(DockZone::Left, leftColumn);
     layoutManager->AddWidget(DockZone::Bottom, wsCommandMonitor);
     layoutManager->AddWidget(DockZone::Center, verticalSlider);
 
@@ -96,8 +97,8 @@ int main()
         
         // Then update views
         wsCommandMonitor->Update();
-        connectionView->Draw();
-        controlModeView->Draw();
+        // connectionView->Draw();
+        // controlModeView->Draw();
         jointPositionController->Update();
     });
 

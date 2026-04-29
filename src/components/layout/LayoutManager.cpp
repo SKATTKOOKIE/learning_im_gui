@@ -48,6 +48,13 @@ void LayoutManager::SetupDockingLayout()
     ImGui::DockBuilderGetNode(right)->LocalFlags |= ImGuiDockNodeFlags_NoSplit;
     ImGui::DockBuilderGetNode(top)->LocalFlags |= ImGuiDockNodeFlags_NoSplit;
     ImGui::DockBuilderGetNode(bottom)->LocalFlags |= ImGuiDockNodeFlags_NoSplit;
+    ImGui::DockBuilderGetNode(center)->LocalFlags |= ImGuiDockNodeFlags_NoSplit;
+    
+    ImGui::DockBuilderGetNode(left)->LocalFlags   |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
+    ImGui::DockBuilderGetNode(right)->LocalFlags  |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
+    ImGui::DockBuilderGetNode(top)->LocalFlags    |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
+    ImGui::DockBuilderGetNode(bottom)->LocalFlags |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
+    ImGui::DockBuilderGetNode(center)->LocalFlags |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
 
     ImGui::DockBuilderFinish(dockspace_id);
 }
@@ -102,8 +109,17 @@ void LayoutManager::Render()
         for (auto &widget : widget_list)
         {
             // Dock the window to the appropriate zone on first appearance
-            ImGui::SetNextWindowDockID(dock_id, ImGuiCond_FirstUseEver);
+            // ImGui::SetNextWindowDockID(dock_id, ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowDockID(dock_id, ImGuiCond_Always);
             widget->Render();
         }
     }
+}
+
+void LayoutManager::SetWindow(GLFWwindow* win)
+{
+    window = win;
+    for (auto& [zone, widget_list] : widgets)
+        for (auto& widget : widget_list)
+            widget->SetWindow(win);
 }

@@ -11,12 +11,12 @@ public:
     void Open();
     void Close();
     void Draw();
-
-private:
     void DrawStateIndicator() const;
     void DrawButtons();
 
+private:
     std::shared_ptr<ConnectionController> controller_;
     bool isOpen_ = true;
+    
 };
 
