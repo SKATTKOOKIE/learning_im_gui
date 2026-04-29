@@ -73,55 +73,89 @@ bool WebSocketClient::PollMessage(std::string& outMsg)
 
 void WebSocketClient::ConnectAndRun()
 {
-    try
+    while (running_ && autoReconnect_)
     {
-        std::cout << "Connecting to " << host_ << ":" << port_ << "\n";
-        
-        net::io_context ioc;
-        tcp::resolver resolver{ioc};
-        
-        // Create WebSocket stream
-        auto wsTemp = std::make_unique<websocket::stream<tcp::socket>>(ioc);
-
-        auto results = resolver.resolve(host_, port_);
-        std::cout << "Resolved host\n";
-        
-        net::connect(wsTemp->next_layer(), results);
-        std::cout << "TCP connected\n";
-        
-        wsTemp->handshake(host_, "/");
-        std::cout << "WebSocket handshake complete\n";
-
-        wsTemp->set_option(
-            websocket::stream_base::timeout::suggested(beast::role_type::client)
-        );
-
-        // Store the WebSocket stream
+        std::cout << "[ConnectAndRun] Top of loop, joining old threads\n";
+        if (sendThread_.joinable())
         {
-            std::lock_guard<std::mutex> lock(wsMutex_);
-            ws_ = std::move(wsTemp);
+            std::cout << "[ConnectAndRun] Joining send thread\n";
+            sendThread_.join();
+            std::cout << "[ConnectAndRun] Send thread joined\n";
+        }
+        if (recvThread_.joinable())
+        {
+            std::cout << "[ConnectAndRun] Joining recv thread\n";
+            recvThread_.join();
+            std::cout << "[ConnectAndRun] Recv thread joined\n";
         }
 
-        connected_ = true;
-        std::cout << "WebSocket connected and ready\n";
+        // Reset ws_ before ioc goes out of scope by scoping them together
+        {
+            std::cout << "[ConnectAndRun] Resetting ws_\n";
+            std::lock_guard<std::mutex> lock(wsMutex_);
+            ws_.reset();
+            std::cout << "[ConnectAndRun] ws_ reset complete\n";
+        }
 
-        // Start sender and receiver threads
-        sendThread_ = std::thread(&WebSocketClient::SendLoop, this);
-        recvThread_ = std::thread(&WebSocketClient::ReceiveLoop, this);
+        try
+        {
+            std::cout << "[ConnectAndRun] Creating ioc\n";
+            auto ioc = std::make_shared<net::io_context>();
+            tcp::resolver resolver{*ioc};
 
-        // Wait for threads to finish
-        if (sendThread_.joinable())
-            sendThread_.join();
-        if (recvThread_.joinable())
-            recvThread_.join();
+            std::cout << "[ConnectAndRun] Creating wsTemp\n";
+            auto wsTemp = std::make_unique<websocket::stream<tcp::socket>>(*ioc);
 
-        connected_ = false;
-        std::cout << "Both threads finished\n";
-    }
-    catch (const std::exception& e)
-    {
-        connected_ = false;
-        std::cerr << "WebSocket connection error: " << e.what() << "\n";
+            auto results = resolver.resolve(host_, port_);
+            std::cout << "Resolved host\n";
+
+            net::connect(wsTemp->next_layer(), results);
+            std::cout << "TCP connected\n";
+
+            wsTemp->handshake(host_, "/");
+            std::cout << "WebSocket handshake complete\n";
+
+            wsTemp->set_option(
+                websocket::stream_base::timeout::suggested(beast::role_type::client)
+            );
+
+            {
+                std::lock_guard<std::mutex> lock(wsMutex_);
+                ws_ = std::move(wsTemp);
+                ioc_ = ioc;  // keep ioc alive as long as ws_ lives
+            }
+
+            connected_ = true;
+            std::cout << "WebSocket connected and ready\n";
+
+            sendThread_ = std::thread(&WebSocketClient::SendLoop, this);
+            recvThread_ = std::thread(&WebSocketClient::ReceiveLoop, this);
+
+            if (sendThread_.joinable())
+                sendThread_.join();
+            if (recvThread_.joinable())
+                recvThread_.join();
+
+            connected_ = false;
+            std::cout << "Both threads finished\n";
+        }
+        catch (const std::exception& e)
+        {
+            connected_ = false;
+            std::cerr << "WebSocket connection error: " << e.what() << "\n";
+        }
+
+        if (running_ && autoReconnect_)
+        {
+            std::cout << "Reconnecting in " << reconnectDelayMs_ << "ms...\n";
+            int elapsed = 0;
+            while (running_ && elapsed < reconnectDelayMs_)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                elapsed += 100;
+            }
+            std::cout << "[ConnectAndRun] Reconnect delay finished, looping\n";
+        }
     }
 
     std::cout << "WebSocket connection thread exited\n";
@@ -138,12 +172,15 @@ void WebSocketClient::SendLoop()
             std::unique_lock<std::mutex> lock(sendMutex_);
             
             // Wait for messages to send or stop signal
-            sendCv_.wait(lock, [this] { 
-                return !sendQueue_.empty() || !running_; 
+            sendCv_.wait(lock, [this] 
+            { 
+                return !sendQueue_.empty() || !running_ || !connected_;
             });
 
-            if (!running_)
+            if (!running_ || !connected_)
+            {
                 break;
+            }
 
             if (!sendQueue_.empty())
             {
@@ -190,61 +227,53 @@ void WebSocketClient::ReceiveLoop()
 {
     std::cout << "Receive thread started (thread_id=" << std::this_thread::get_id() << ")\n";
     
-    try
+    while (running_ && connected_)
     {
-        while (running_ && connected_)
+        beast::flat_buffer buffer;
+        beast::error_code ec;
+
+        if (!ws_)
         {
-            beast::flat_buffer buffer;
-            beast::error_code ec;
-
-            // Read from WebSocket (blocking) - NO MUTEX!
-            // Boost.Beast allows one read and one write concurrently
-            if (ws_)
-            {
-                ws_->read(buffer, ec);
-            }
-            else
-            {
-                std::cout << "WebSocket is null in receive thread\n";
-                break;
-            }
-
-            if (!ec)
-            {
-                std::string msg = beast::buffers_to_string(buffer.data());
-
-                if(websocketDebug_)
-                {
-                    std::cout << "Received: " << msg << "\n";
-                }
-
-                if (messageCallback_)
-                    messageCallback_(msg);
-
-                {
-                    std::lock_guard<std::mutex> lock(recvMutex_);
-                    recvQueue_.push(msg);
-                }
-            }
-            else if (ec == websocket::error::closed)
-            {
-                std::cout << "Server closed connection\n";
-                break;
-            }
-            else if (ec != net::error::would_block)
-            {
-                std::cerr << "Read error: " << ec.message() << "\n";
-                throw beast::system_error{ec};
-            }
+            std::cout << "WebSocket is null in receive thread\n";
+            break;
         }
 
-        connected_ = false;
-    }
-    catch (const std::exception& e)
-    {
-        connected_ = false;
-        std::cerr << "Receive thread error: " << e.what() << "\n";
+        ws_->read(buffer, ec);
+
+        if (ec == websocket::error::closed ||
+            ec == net::error::eof ||
+            ec == net::error::connection_reset ||
+            ec == net::error::connection_aborted)
+        {
+            std::cout << "Connection closed: " << ec.message() << "\n";
+            break;
+        }
+        else if (ec == beast::error::timeout)
+        {
+            std::cout << "Connection timed out\n";
+            break;
+        }
+        else if (ec)
+        {
+            std::cerr << "Read error: " << ec.message() << "\n";
+            break;
+        }
+        else
+        {
+            std::string msg = beast::buffers_to_string(buffer.data());
+
+            if (websocketDebug_)
+                std::cout << "Received: " << msg << "\n";
+
+            if (messageCallback_)
+                messageCallback_(msg);
+
+            std::lock_guard<std::mutex> lock(recvMutex_);
+            recvQueue_.push(msg);
+        }
     }
 
+    connected_ = false;
+    sendCv_.notify_all();
     std::cout << "Receive thread exited\n";
 }

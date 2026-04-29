@@ -26,7 +26,7 @@ int main()
     // --- WebSocket Clients Setup ---
     
     // Command port (8765)
-    auto wsCommandClient = std::make_shared<WebSocketClient>("172.19.171.48", "8765");
+    auto wsCommandClient = std::make_shared<WebSocketClient>("172.19.171.29", "8765");
     wsCommandClient->Start();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     if (wsCommandClient->IsConnected())
@@ -39,7 +39,7 @@ int main()
     }
 
     // Telemetry port (8766)
-    auto wsTelemetryClient = std::make_shared<WebSocketClient>("172.19.171.48", "8766");
+    auto wsTelemetryClient = std::make_shared<WebSocketClient>("172.19.171.29", "8766");
     wsTelemetryClient->Start();
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     if (wsTelemetryClient->IsConnected())
@@ -97,8 +97,6 @@ int main()
         
         // Then update views
         wsCommandMonitor->Update();
-        // connectionView->Draw();
-        // controlModeView->Draw();
         jointPositionController->Update();
     });
 

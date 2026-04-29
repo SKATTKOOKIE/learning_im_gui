@@ -44,6 +44,9 @@ private:
     
     std::atomic<bool> running_{false};
     std::atomic<bool> connected_{false};
+    std::atomic<int>  reconnectDelayMs_{2000};
+    std::atomic<bool> autoReconnect_{true};
+    std::shared_ptr<net::io_context> ioc_;
 
     // Shared WebSocket stream (protected by mutex for thread safety)
     std::unique_ptr<websocket::stream<tcp::socket>> ws_;
