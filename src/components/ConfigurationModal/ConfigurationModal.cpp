@@ -4,12 +4,12 @@
 #include <iostream>
 
 ConfigurationModalComponent::ConfigurationModalComponent()
-    : port_(8765)
+    : commandPort_(8765), telemetryPort_(8766)
     , show_configuration_modal_(false)
     , show_shutdown_modal_(false)
     , pending_shutdown_confirm_(false)
 {
-    std::strncpy(ip_buf_, "172.19.171.48", sizeof(ip_buf_));
+    std::strncpy(ip_buf_, "172.19.171.29", sizeof(ip_buf_));
 }
 
 void ConfigurationModalComponent::Render()
@@ -97,13 +97,20 @@ void ConfigurationModalComponent::DrawNetworkTab()
     ImGui::InputText("##ip", ip_buf_, sizeof(ip_buf_));
 
     ImGui::Spacing();
-    ImGui::Text("Port");
+    ImGui::Text("Command Port");
     ImGui::SetNextItemWidth(-1);
-    ImGui::InputInt("##port", &port_);
+    ImGui::InputInt("##cmdport", &commandPort_);
+
+    ImGui::Spacing();
+    ImGui::Text("Telemetry Port");
+    ImGui::SetNextItemWidth(-1);
+    ImGui::InputInt("##telport", &telemetryPort_);
 
     ImGui::Spacing();
     if (ImGui::Button("Save", { -1, 30 }))
     {
+        if (saveCallback_)
+            saveCallback_(std::string(ip_buf_), commandPort_, telemetryPort_);
         show_configuration_modal_ = false;
         ImGui::CloseCurrentPopup();
     }

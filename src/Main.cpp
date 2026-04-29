@@ -61,6 +61,13 @@ int main()
 
     auto configurationModal = std::make_shared<ConfigurationModalComponent>();
 
+    configurationModal->SetSaveCallback([&](const std::string& ip, int cmdPort, int telPort)
+    {
+        std::cout << "Config saved: " << ip << " cmd=" << cmdPort << " tel=" << telPort << "\n";
+        wsCommandClient->Restart(ip, std::to_string(cmdPort));
+        wsTelemetryClient->Restart(ip, std::to_string(telPort));
+    });
+
     // This will hosue connection view and control mode view widgets
     auto leftColumn = std::make_shared<LeftColumnWidget>(connectionView, controlModeView, configurationModal);
 

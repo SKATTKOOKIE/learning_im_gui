@@ -161,6 +161,16 @@ void WebSocketClient::ConnectAndRun()
     std::cout << "WebSocket connection thread exited\n";
 }
 
+void WebSocketClient::Restart(const std::string& host, const std::string& port)
+{
+    std::thread([this, host, port]()
+    {
+        Stop();
+        SetHost(host, port);
+        Start();
+    }).detach();
+}
+
 void WebSocketClient::SendLoop()
 {
     std::cout << "Send thread started (thread_id=" << std::this_thread::get_id() << ")\n";
