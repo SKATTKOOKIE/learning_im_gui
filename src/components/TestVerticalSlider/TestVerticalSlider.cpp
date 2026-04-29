@@ -2,11 +2,12 @@
 #include "components/JointPositionController/JointPositionController.h"
 #include <imgui.h>
 #include <string>
+#include <algorithm>
 
 TestVerticalSlider::TestVerticalSlider()
-: joint_position{0, 0, 0, 0, 0, 0, 0},
-joint_velocity{24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f},
-joint_torque{50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f}
+: joint_position{0, 0, 0, 0, 0, 0, 0, 0},
+  joint_velocity{24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f},
+  joint_torque{50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f, 50.0f}
 {
 }
 
@@ -20,6 +21,7 @@ void TestVerticalSlider::SetController(std::shared_ptr<JointPositionController> 
 void TestVerticalSlider::Render()
 {
     ImGui::Begin("Joint Control");
+
     if (controller_)
     {
         if (ImGui::Button("Update to arm position"))
@@ -28,68 +30,204 @@ void TestVerticalSlider::Render()
             {
                 joint_position[i] = controller_->GetJointPosition(i);
                 joint_velocity[i] = controller_->GetJointVelocity(i);
-                joint_torque[i] = controller_->GetJointTorque(i);
+                joint_torque[i]   = controller_->GetJointTorque(i);
             }
         }
     }
 
-    // Store original style and modify for slider handle height
-    ImGuiStyle& style = ImGui::GetStyle();
-    float originalGrabMinSize = style.GrabMinSize;
-    
-    // Increase grab size (this affects slider handle height)
-    style.GrabMinSize = 25.0f; // Adjust this value to change handle height
+    ImGuiStyle& style      = ImGui::GetStyle();
+    float originalGrabSize = style.GrabMinSize;
+    style.GrabMinSize      = 25.0f;
 
-    if (ImGui::BeginTable("JointSliders", NUM_JOINTS, ImGuiTableFlags_SizingFixedFit))
+    // Calculate the height to match slider column content:
+    // label + slider + pos text + vel row + torque row + spacing
+    const float sliderHeight   = 250.0f;
+    const float rowHeight      = ImGui::GetFrameHeight();
+    const float columnHeight   = rowHeight         // J label
+                               + sliderHeight      // slider
+                               + rowHeight         // pos text
+                               + rowHeight         // vel input row
+                               + rowHeight         // torque input row
+                               + style.ItemSpacing.y * 4;
+
+    int totalColumns = (NUM_JOINTS - JOINT_ID_START_VALUE) + 1;
+    if (ImGui::BeginTable("JointSliders", totalColumns, ImGuiTableFlags_SizingFixedFit))
     {
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        
+        for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 160.0f);
+
+        // Joint columns
         for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
         {
             ImGui::TableNextColumn();
-            
-            // Create unique ID strings for each joint
-            std::string pos_id = "##joint_" + std::to_string(i) + "_position_slider";
-            std::string vel_id = "##joint_" + std::to_string(i) + "_velocity_input";
-            std::string torque_id = "##joint_" + std::to_string(i) + "_torque_input";
-            
-            // Position slider
-            bool positionChanged = ImGui::VSliderFloat(pos_id.c_str(), ImVec2(60, 250), &joint_position[i], -90.0f, 90.0f);
-            
-            // Position value text (1 decimal place)
-            ImGui::Text("%.1f°", joint_position[i]);
-            
-            // Velocity input (deg/s, default 24.0, 1 decimal place)
-            ImGui::SetNextItemWidth(120.0f);
-            bool velocityChanged = ImGui::InputFloat(vel_id.c_str(), &joint_velocity[i], 1.0f, 5.0f, "%.1f");
-            ImGui::Text("deg/s");
-            
-            // Torque input (percentage 0-100, scales to 0-100.00)
-            ImGui::SetNextItemWidth(120.0f);
-            bool torqueChanged = ImGui::InputFloat(torque_id.c_str(), &joint_torque[i], 1.0f, 5.0f, "%.2f");
-            ImGui::Text("%%");
-            
-            // Clamp torque to 0-100% range
-            if (joint_torque[i] < 0.0f) joint_torque[i] = 0.0f;
-            if (joint_torque[i] > 100.0f) joint_torque[i] = 100.0f;
-            
-            // Send command to controller if any value changed
-            if (controller_ && (positionChanged || velocityChanged || torqueChanged))
-            {
+
+            std::string pos_id    = "##joint_" + std::to_string(i) + "_pos";
+            std::string vel_id    = "##joint_" + std::to_string(i) + "_vel";
+            std::string torque_id = "##joint_" + std::to_string(i) + "_torque";
+
+            ImGui::Text("J%d", i);
+
+            bool posChanged = ImGui::VSliderFloat(
+                pos_id.c_str(), ImVec2(60, sliderHeight), &joint_position[i],
+                (i == 7) ? 0.0f : -90.0f, 90.0f
+            );
+            ImGui::Text("%.1f deg", joint_position[i]);
+
+            // Velocity — input + label side by side, no step buttons
+            ImGui::SetNextItemWidth(80.0f);
+            ImGui::InputFloat(vel_id.c_str(), &joint_velocity[i], 0.0f, 0.0f, "%.1f");
+            ImGui::SameLine(); ImGui::Text("deg/s");
+
+            // Torque — input + label side by side, no step buttons
+            ImGui::SetNextItemWidth(80.0f);
+            ImGui::InputFloat(torque_id.c_str(), &joint_torque[i], 0.0f, 0.0f, "%.2f");
+            ImGui::SameLine(); ImGui::Text("%%");
+
+            joint_torque[i] = std::clamp(joint_torque[i], 0.0f, 100.0f);
+
+            if (controller_ && posChanged)
                 controller_->SetJointPosition(i, joint_position[i], joint_velocity[i], joint_torque[i]);
-            }
         }
+
+        // Jaw column
+        ImGui::TableNextColumn();
+
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.15f, 0.15f, 0.15f, 1.0f));
+        if (ImGui::BeginChild("JawControlPanel", ImVec2(150, columnHeight), true))
+        {
+            ImGui::Text("Jaw");
+            ImGui::Spacing();
+
+            // Velocity — input + label side by side, no step buttons
+            ImGui::SetNextItemWidth(80.0f);
+            ImGui::InputFloat("##jaw_vel",    &jaw_velocity_, 0.0f, 0.0f, "%.1f");
+            ImGui::SameLine(); ImGui::Text("vel");
+
+            // Torque — input + label side by side, no step buttons
+            ImGui::SetNextItemWidth(80.0f);
+            ImGui::InputFloat("##jaw_torque", &jaw_torque_,   0.0f, 0.0f, "%.1f");
+            ImGui::SameLine(); ImGui::Text("torque");
+
+            jaw_velocity_ = std::clamp(jaw_velocity_, 0.0f, 100.0f);
+            jaw_torque_   = std::clamp(jaw_torque_,   0.0f, 100.0f);
+
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+
+            if (ImGui::Button("Close",   { 120, 30 }) && controller_)
+                controller_->SendJawCommand(1, jaw_velocity_, jaw_torque_);
+
+            if (ImGui::Button("Release", { 120, 30 }) && controller_)
+                controller_->SendJawCommand(2, jaw_velocity_, jaw_torque_);
+
+            if (ImGui::Button("Open",    { 120, 30 }) && controller_)
+                controller_->SendJawCommand(3, jaw_velocity_, jaw_torque_);
+
+            ImGui::EndChild();
+        }
+        ImGui::PopStyleColor();
+
         ImGui::EndTable();
     }
-    
-    // Restore original style
-    style.GrabMinSize = originalGrabMinSize;
-    
+
+    style.GrabMinSize = originalGrabSize;
     ImGui::End();
 }
+
+// void TestVerticalSlider::Render()
+// {
+//     ImGui::Begin("Joint Control");
+
+//     if (controller_)
+//     {
+//         if (ImGui::Button("Update to arm position"))
+//         {
+//             for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
+//             {
+//                 joint_position[i] = controller_->GetJointPosition(i);
+//                 joint_velocity[i] = controller_->GetJointVelocity(i);
+//                 joint_torque[i]   = controller_->GetJointTorque(i);
+//             }
+//         }
+//     }
+
+//     ImGuiStyle& style       = ImGui::GetStyle();
+//     float originalGrabSize  = style.GrabMinSize;
+//     style.GrabMinSize       = 25.0f;
+
+//     if (ImGui::BeginTable("JointSliders", NUM_JOINTS, ImGuiTableFlags_SizingFixedFit))
+//     {
+//         for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
+//             ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
+
+//         for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
+//         {
+//             ImGui::TableNextColumn();
+
+//             std::string pos_id    = "##joint_" + std::to_string(i) + "_pos";
+//             std::string vel_id    = "##joint_" + std::to_string(i) + "_vel";
+//             std::string torque_id = "##joint_" + std::to_string(i) + "_torque";
+
+//             ImGui::Text("J%d", i);
+
+//             bool posChanged = ImGui::VSliderFloat(
+//                 pos_id.c_str(), ImVec2(60, 250), &joint_position[i],
+//                 (i == 7) ? 0.0f : -90.0f,
+//                 90.0f
+//             );
+//             ImGui::Text("%.1f deg", joint_position[i]);
+
+//             ImGui::SetNextItemWidth(120.0f);
+//             bool velChanged    = ImGui::InputFloat(vel_id.c_str(), &joint_velocity[i], 1.0f, 5.0f, "%.1f");
+//             ImGui::Text("deg/s");
+
+//             ImGui::SetNextItemWidth(120.0f);
+//             bool torqueChanged = ImGui::InputFloat(torque_id.c_str(), &joint_torque[i], 1.0f, 5.0f, "%.2f");
+//             ImGui::Text("%%");
+
+//             joint_torque[i] = std::clamp(joint_torque[i], 0.0f, 100.0f);
+
+//             if (controller_ && posChanged)
+//             {
+//                 controller_->SetJointPosition(i, joint_position[i], joint_velocity[i], joint_torque[i]);
+//             }
+//         }
+//         ImGui::EndTable();
+//     }
+
+//     style.GrabMinSize = originalGrabSize;
+
+//     ImGui::Separator();
+//     ImGui::Text("Jaw Control");
+//     ImGui::Spacing();
+
+//     ImGui::SetNextItemWidth(120.0f);
+//     ImGui::InputFloat("##jaw_vel",    &jaw_velocity_, 1.0f, 5.0f, "%.1f");
+//     ImGui::SameLine(); ImGui::Text("vel");
+
+//     ImGui::SetNextItemWidth(120.0f);
+//     ImGui::InputFloat("##jaw_torque", &jaw_torque_,   1.0f, 5.0f, "%.1f");
+//     ImGui::SameLine(); ImGui::Text("torque");
+
+//     jaw_velocity_ = std::clamp(jaw_velocity_, 0.0f, 100.0f);
+//     jaw_torque_   = std::clamp(jaw_torque_,   0.0f, 100.0f);
+
+//     ImGui::Spacing();
+
+//     if (ImGui::Button("Close",   { 80, 30 }) && controller_)
+//         controller_->SendJawCommand(1, jaw_velocity_, jaw_torque_);
+
+//     ImGui::SameLine();
+
+//     if (ImGui::Button("Release", { 80, 30 }) && controller_)
+//         controller_->SendJawCommand(2, jaw_velocity_, jaw_torque_);
+
+//     ImGui::SameLine();
+
+//     if (ImGui::Button("Open",    { 80, 30 }) && controller_)
+//         controller_->SendJawCommand(3, jaw_velocity_, jaw_torque_);
+
+//     ImGui::End();
+// }

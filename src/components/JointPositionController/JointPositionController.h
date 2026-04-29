@@ -9,7 +9,7 @@ class WebSocketClient;
 class JointPositionController
 {
 public:
-    static constexpr int NUM_JOINTS = 7;
+    static constexpr int NUM_JOINTS = 8;
 
     explicit JointPositionController(std::shared_ptr<WebSocketClient> client);
 
@@ -23,8 +23,10 @@ public:
     
     const std::string& GetLastError() const { return lastError_; }
 
-private:
     void SendJointCommand(int jointIndex, float position, float velocity, float torque);
+    void SendJawCommand(int command, float velocity, float torque);
+
+private:
     void HandleResponse(const std::string& message);
 
     std::shared_ptr<WebSocketClient> wsClient_;

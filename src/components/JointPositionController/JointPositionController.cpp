@@ -70,6 +70,29 @@ void JointPositionController::SendJointCommand(int jointIndex, float position, f
     wsClient_->Send(message);
 }
 
+void JointPositionController::SendJawCommand(int command, float velocity, float torque)
+{
+    if (!wsClient_)
+        return;
+
+    JsonMessageBuilder dataBuilder;
+    dataBuilder.AddField("command", command)
+               .AddField("velocity", (double)velocity)
+               .AddField("torque",   (double)torque);
+
+    JsonMessageBuilder commandBuilder;
+    commandBuilder.AddField("type", 4)
+                  .AddObject("data", dataBuilder);
+
+    JsonMessageBuilder rootBuilder;
+    rootBuilder.AddObject("command", commandBuilder);
+
+    std::string message = rootBuilder.Build();
+    std::cout << "JointPositionController: Sending jaw command - command: " << command
+              << ", velocity: " << velocity << ", torque: " << torque << "\n";
+    wsClient_->Send(message);
+}
+
 void JointPositionController::HandleTelemetry(const std::string& message)
 {
     // Parse joint position telemetry

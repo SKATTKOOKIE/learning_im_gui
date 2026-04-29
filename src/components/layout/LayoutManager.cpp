@@ -24,8 +24,9 @@ void LayoutManager::SetupDockingLayout()
     ImGuiID left, right, top, bottom, center;
     ImGuiID remaining = dockspace_id;
     
+    
     // First split off left panel (15% width)
-    left = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Left, 0.15f, nullptr, &remaining);
+    left = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Left, 0.20f, nullptr, &remaining);
     
     // Then split off right panel (15% width of remaining)
     right = ImGui::DockBuilderSplitNode(remaining, ImGuiDir_Right, 0.176f, nullptr, &remaining);
@@ -55,6 +56,8 @@ void LayoutManager::SetupDockingLayout()
     ImGui::DockBuilderGetNode(top)->LocalFlags    |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
     ImGui::DockBuilderGetNode(bottom)->LocalFlags |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
     ImGui::DockBuilderGetNode(center)->LocalFlags |= ImGuiDockNodeFlags_NoUndocking | ImGuiDockNodeFlags_NoTabBar;
+
+    ImGui::SetNextWindowSizeConstraints({ 350.0f, -1.0f }, { 400.0f, -1.0f });
 
     ImGui::DockBuilderFinish(dockspace_id);
 }
