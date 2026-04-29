@@ -337,3 +337,111 @@ public:
     }
 
 };
+
+
+class JointStatusParser
+{
+public:
+    struct JointStatus
+    {
+        int   joint              = 0;
+        int   operational_mode   = 0;
+        int   control_mode       = 0;
+        int   regeneration_mode  = 0;
+        bool  brake_override     = false;
+        bool  movement_in_progress = false;
+        bool  use_halls          = false;
+        bool  temperature_warning = false;
+        bool  realtime_control_mode = false;
+        bool  valid              = false;
+    };
+
+    static const char* JointName(int joint)
+    {
+        switch (joint)
+        {
+            case 1: return "Shoulder Az";
+            case 2: return "Shoulder El";
+            case 3: return "Elbow El";
+            case 4: return "Wrist El";
+            case 5: return "Wrist Az";
+            case 6: return "Wrist Rot";
+            case 7: return "Jaw";
+            default: return "Unknown";
+        }
+    }
+
+    static const char* OperationalModeName(int mode)
+    {
+        switch (mode)
+        {
+            case 0: return "Safe";
+            case 1: return "Standby";
+            case 2: return "Active";
+            case 3: return "Identify";
+            case 4: return "Periphery";
+            case 5: return "Bring Up";
+            case 6: return "Shutdown";
+            default: return "Unknown";
+        }
+    }
+
+    static const char* ControlModeName(int mode)
+    {
+        switch (mode)
+        {
+            case 0: return "Speed";
+            case 1: return "Position";
+            case 2: return "Torque";
+            case 3: return "FOC ID";
+            case 4: return "Speed ID";
+            case 5: return "Hall ID";
+            case 6: return "Power Mgmt";
+            default: return "Unknown";
+        }
+    }
+
+    static bool TryParse(const std::string& jsonStr, JointStatus& status)
+    {
+        if (jsonStr.find("\"telemetry\"") == std::string::npos)
+            return false;
+
+        const std::string typeSearch = "\"type\":";
+        size_t typePos = jsonStr.find(typeSearch);
+        if (typePos == std::string::npos) return false;
+        typePos += typeSearch.size();
+        int typeValue = 0;
+        if (sscanf(jsonStr.c_str() + typePos, "%d", &typeValue) != 1) return false;
+        if (typeValue != 4) return false;
+
+        auto parseInt = [&](const std::string& key, int& out) -> bool {
+            size_t pos = jsonStr.find(key);
+            if (pos == std::string::npos) return false;
+            pos += key.size();
+            return sscanf(jsonStr.c_str() + pos, "%d", &out) == 1;
+        };
+
+        auto parseBool = [&](const std::string& key, bool& out) -> bool {
+            size_t pos = jsonStr.find(key);
+            if (pos == std::string::npos) return false;
+            pos += key.size();
+            while (pos < jsonStr.size() && jsonStr[pos] == ' ') pos++;
+            if (jsonStr.substr(pos, 4) == "true")  { out = true;  return true; }
+            if (jsonStr.substr(pos, 5) == "false") { out = false; return true; }
+            return false;
+        };
+
+        parseInt("\"joint\":",               status.joint);
+        parseInt("\"operational_mode\":",    status.operational_mode);
+        parseInt("\"control_mode\":",        status.control_mode);
+        parseInt("\"regeneration_mode\":",   status.regeneration_mode);
+        parseBool("\"brake_override\":",     status.brake_override);
+        parseBool("\"movement_in_progress\":", status.movement_in_progress);
+        parseBool("\"use_halls\":",          status.use_halls);
+        parseBool("\"temperature_warning\":", status.temperature_warning);
+        parseBool("\"realtime_control_mode\":", status.realtime_control_mode);
+
+        status.valid = true;
+        return true;
+    }
+};

@@ -11,6 +11,8 @@
 #include "components/JointPositionController/JointPositionController.h"
 #include "components/websocket/TelemetryDispatcher.h"
 #include "components/layout/LeftColumnWidget.h"
+#include "components/layout/CenterColumnWidget.h"
+#include "components/JointStatusTable/JointStatusTable.h"
 #include <memory>
 #include <iostream>
 #include "imgui_demo.cpp"
@@ -77,22 +79,28 @@ int main()
     // --- Create WebSocket Monitors ---
     auto wsCommandMonitor   = std::make_shared<WebSocketMonitor>(wsCommandClient);
 
+    auto verticalSlider = std::make_shared<TestVerticalSlider>();
+    verticalSlider->SetController(jointPositionController);
+
+    auto jointStatusTable = std::make_shared<JointStatusTable>();
+    auto centerColumn     = std::make_shared<CenterColumnWidget>(verticalSlider, jointStatusTable);
+
     // --- Create Telemetry Dispatcher ---
     auto telemetryDispatcher = std::make_shared<TelemetryDispatcher>(wsTelemetryClient);
     telemetryDispatcher->RegisterConnectionController(connectionController);
     telemetryDispatcher->RegisterControlModeController(controlModeController);
     telemetryDispatcher->RegisterJointPositionController(jointPositionController);
+    telemetryDispatcher->RegisterJointStatusTable(jointStatusTable);
 
     // --- Layout Manager and Components ---
     auto layoutManager = std::make_shared<LayoutManager>();
 
-    auto verticalSlider = std::make_shared<TestVerticalSlider>();
-    verticalSlider->SetController(jointPositionController);
-  
+
     // Add widgets to layout
     layoutManager->AddWidget(DockZone::Left, leftColumn);
     layoutManager->AddWidget(DockZone::Bottom, wsCommandMonitor);
-    layoutManager->AddWidget(DockZone::Center, verticalSlider);
+    // layoutManager->AddWidget(DockZone::Center, verticalSlider);
+    layoutManager->AddWidget(DockZone::Center, centerColumn);
 
     app.AddComponent(layoutManager);
 

@@ -3,6 +3,7 @@
 #include "components/ConnectionController/ConnectionController.h"
 #include "components/ControlModeController/ControlModeController.h"
 #include "components/JointPositionController/JointPositionController.h"
+#include "components/JointStatusTable/JointStatusTable.h"
 #include <iostream>
 #include <cstdio>
 
@@ -24,6 +25,11 @@ void TelemetryDispatcher::RegisterControlModeController(std::shared_ptr<ControlM
 void TelemetryDispatcher::RegisterJointPositionController(std::shared_ptr<JointPositionController> controller)
 {
     jointPositionController_ = std::move(controller);
+}
+
+void TelemetryDispatcher::RegisterJointStatusTable(std::shared_ptr<JointStatusTable> table)
+{
+    jointStatusTable_ = std::move(table);
 }
 
 int TelemetryDispatcher::ExtractTelemetryType(const std::string& message) const
@@ -87,7 +93,15 @@ void TelemetryDispatcher::Update()
                     jointPositionController_->HandleTelemetry(message);
                 }
                 break;
-                
+               
+            case 4:  // Joint STATUS telemetry
+                if (jointStatusTable_)
+                {
+                    std::cout << "TelemetryDispatcher: Routing to jointStatusTable\n";
+                    jointStatusTable_->HandleTelemetry(message);
+                }
+                break;   
+
             default:
                 std::cout << "TelemetryDispatcher: Unknown telemetry type: " << telemetryType << "\n";
         }
