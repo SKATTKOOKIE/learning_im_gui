@@ -37,11 +37,11 @@ void TestVerticalSlider::Render()
 
     ImGuiStyle& style      = ImGui::GetStyle();
     float originalGrabSize = style.GrabMinSize;
-    style.GrabMinSize      = 25.0f;
+    style.GrabMinSize      = 35.0f;
 
     // Calculate the height to match slider column content:
     // label + slider + pos text + vel row + torque row + spacing
-    const float sliderHeight   = 250.0f;
+    const float sliderHeight   = 300.0f;
     const float rowHeight      = ImGui::GetFrameHeight();
     const float columnHeight   = rowHeight         // J label
                                + sliderHeight      // slider
@@ -54,8 +54,8 @@ void TestVerticalSlider::Render()
     if (ImGui::BeginTable("JointSliders", totalColumns, ImGuiTableFlags_SizingFixedFit))
     {
         for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
-            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 140.0f);
-        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 160.0f);
+            ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 100.0f);
+        ImGui::TableSetupColumn("", ImGuiTableColumnFlags_WidthFixed, 100.0f);
 
         // Joint columns
         for (int i = JOINT_ID_START_VALUE; i < NUM_JOINTS; i++)
@@ -69,18 +69,18 @@ void TestVerticalSlider::Render()
             ImGui::Text("J%d", i);
 
             bool posChanged = ImGui::VSliderFloat(
-                pos_id.c_str(), ImVec2(60, sliderHeight), &joint_position[i],
+                pos_id.c_str(), ImVec2(100, sliderHeight), &joint_position[i],
                 (i == 7) ? 0.0f : -90.0f, 90.0f
             );
             ImGui::Text("%.1f deg", joint_position[i]);
 
             // Velocity — input + label side by side, no step buttons
-            ImGui::SetNextItemWidth(80.0f);
+            ImGui::SetNextItemWidth(60.0f);
             ImGui::InputFloat(vel_id.c_str(), &joint_velocity[i], 0.0f, 0.0f, "%.1f");
             ImGui::SameLine(); ImGui::Text("deg/s");
 
             // Torque — input + label side by side, no step buttons
-            ImGui::SetNextItemWidth(80.0f);
+            ImGui::SetNextItemWidth(60.0f);
             ImGui::InputFloat(torque_id.c_str(), &joint_torque[i], 0.0f, 0.0f, "%.2f");
             ImGui::SameLine(); ImGui::Text("%%");
 

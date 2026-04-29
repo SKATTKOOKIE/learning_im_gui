@@ -1,5 +1,6 @@
 #include "ConnectionView.h"
 #include <imgui.h>
+#include "components/layout/EmanipCustomWidgets.h"
 
 ConnectionView::ConnectionView(std::shared_ptr<ConnectionController> controller)
 : controller_(std::move(controller))
@@ -48,9 +49,9 @@ void ConnectionView::DrawStateIndicator() const
     };
     
     static constexpr StateStyle styles[] = {
-        { { 0.5f, 0.5f, 0.5f, 1.0f }, "CONNECTTION STATE : UNKNOWN" },          // 0 - Unknown
-        { { 0.0f, 1.0f, 0.0f, 1.0f }, "CONNECTTION STATE : CONNECTED" },        // 1 - Connected
-        { { 0.5f, 0.5f, 0.5f, 1.0f }, "CONNECTTION STATE : DISCONNECTED" },     // 2 - Disconnected
+        { { 0.5f, 0.5f, 0.5f, 1.0f }, "CONNECTION STATE : UNKNOWN" },          // 0 - Unknown
+        { { 0.0f, 1.0f, 0.0f, 1.0f }, "CONNECTION STATE : CONNECTED" },        // 1 - Connected
+        { { 0.5f, 0.5f, 0.5f, 1.0f }, "CONNECTION STATE : DISCONNECTED" },     // 2 - Disconnected
     };
     
     int stateIndex = static_cast<int>(state);
@@ -63,28 +64,15 @@ void ConnectionView::DrawStateIndicator() const
 
 void ConnectionView::DrawButtons()
 {
-    const auto state = controller_->GetState();
-    
-    // Buttons are always available - they just send their command
-    // The server will respond with appropriate status
-    
-    // Connect button
+    if (EmanipCustomWidgets::PushButton("Connect", {120, 50},
+        ImVec4(0.0f, 0.8f, 0.0f, 1.0f))) // green
     {
-        if (ImGui::Button("Connect", { 120, 30 }))
-            controller_->Connect();
-            
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-            ImGui::SetTooltip("Send connect command to ROV");
+        controller_->Connect();
     }
-    
-    ImGui::SameLine();
-    
-    // Disconnect button
+
+    if (EmanipCustomWidgets::PushButton("Disconnect", {120, 50},
+        ImVec4(1.f, 0.671f, 0.f, 1.f))) // orange
     {
-        if (ImGui::Button("Disconnect", { 120, 30 }))
-            controller_->Disconnect();
-            
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-            ImGui::SetTooltip("Send disconnect command to ROV");
+        controller_->Disconnect();
     }
 }

@@ -23,7 +23,7 @@ void LeftColumnWidget::Render()
     ImGui::Begin("Left Panel###LeftColumnWidget", nullptr,
                  ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
 
-    if (ImGui::BeginChild("ConnectionSection", { 0, 100 }, true))
+    if (ImGui::BeginChild("ConnectionSection", { 0, 200 }, true))
     {
         connectionView_->DrawStateIndicator();
         ImGui::Separator();
@@ -33,7 +33,7 @@ void LeftColumnWidget::Render()
 
     ImGui::Spacing();
 
-    if (ImGui::BeginChild("ControlModeSection", { 0, 100 }, true))
+    if (ImGui::BeginChild("ControlModeSection", { 0, 200 }, true))
     {
         controlModeView_->DrawStateIndicator();
         ImGui::Separator();
@@ -43,7 +43,7 @@ void LeftColumnWidget::Render()
 
     ImGui::Spacing();
 
-    if (ImGui::BeginChild("ConfigSection", { 0, 0 }, true))
+    if (ImGui::BeginChild("ConfigSection", { 0, 200 }, true))
     {
         configModal_->DrawPanel(window);
     }

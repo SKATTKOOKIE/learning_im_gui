@@ -2,6 +2,7 @@
 #include <imgui.h>
 #include <cstring>
 #include <iostream>
+#include "components/layout/EmanipCustomWidgets.h"
 
 ConfigurationModalComponent::ConfigurationModalComponent()
     : commandPort_(8765), telemetryPort_(8766)
@@ -21,11 +22,19 @@ void ConfigurationModalComponent::Render()
 
 void ConfigurationModalComponent::DrawPanel(GLFWwindow* win)
 {
-    if (ImGui::Button("Configuration", { -1, 30 }))
+    if (EmanipCustomWidgets::PushButton("Configuration", {120, 50},
+        ImVec4(0.f, 0.933f, 1.f, 1.f))) // cyan
+    {
         show_configuration_modal_ = true;
+    }
 
     if (show_configuration_modal_)
         ImGui::OpenPopup("Configuration###ConfigModal");
+
+    if (show_demo_window_)
+    {
+        ImGui::ShowDemoWindow(&show_demo_window_);
+    }
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, { 0.5f, 0.5f });
@@ -119,9 +128,12 @@ void ConfigurationModalComponent::DrawNetworkTab()
 void ConfigurationModalComponent::DrawOptionsTab()
 {
     ImGui::Spacing();
+    if (ImGui::Button("Open ImGui Demo", { -1, 30 }))
+        show_demo_window_ = true;
+
+    ImGui::Spacing();
     if (ImGui::Button("Shutdown Application", { -1, 30 }))
     {
-        std::cout << "[Shutdown] Shutdown button clicked" << std::endl;
         show_configuration_modal_ = false;
         ImGui::CloseCurrentPopup();
         pending_shutdown_confirm_ = true;

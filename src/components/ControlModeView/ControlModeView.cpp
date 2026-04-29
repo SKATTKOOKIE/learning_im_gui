@@ -1,5 +1,6 @@
 #include "ControlModeView.h"
 #include <imgui.h>
+#include "components/layout/EmanipCustomWidgets.h"
 
 ControlModeView::ControlModeView(std::shared_ptr<ControlModeController> controller)
     : controller_(std::move(controller))
@@ -45,21 +46,15 @@ void ControlModeView::DrawStateIndicator() const
 
 void ControlModeView::DrawButtons()
 {
+    if (EmanipCustomWidgets::PushButton("Set Standby", {120, 50},
+        ImVec4(1.f, 0.671f, 0.f, 1.f))) // orange
     {
-        if (ImGui::Button("Set Standby", { 120, 30 }))
-            controller_->SetStandby();
-        
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-            ImGui::SetTooltip("Send set standby command to EMANIP");
+        controller_->SetStandby();
     }
-    
-    ImGui::SameLine();
-    
+
+    if (EmanipCustomWidgets::PushButton("Set Active", {120, 50},
+        ImVec4(0.0f, 0.8f, 0.0f, 1.0f))) // green
     {
-        if (ImGui::Button("Set Active", { 120, 30 }))
-            controller_->SetActive();
-        
-        if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayNormal))
-            ImGui::SetTooltip("Send set active command to EMANIP");
+        controller_->SetActive();
     }
 }

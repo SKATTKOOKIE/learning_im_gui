@@ -26,4 +26,6 @@ private:
     bool  pending_shutdown_confirm_;
 
     SaveCallback saveCallback_;
+
+    bool show_demo_window_ = false;
 };
