@@ -89,7 +89,9 @@ void WebSocketClient::ConnectAndRun()
             std::cout << "[ConnectAndRun] Recv thread joined\n";
         }
 
-        // Reset ws_ before ioc goes out of scope by scoping them together
+        std::cout << "[ConnectAndRun] Clearing send queue\n";
+        ClearSendQueue();
+
         {
             std::cout << "[ConnectAndRun] Resetting ws_\n";
             std::lock_guard<std::mutex> lock(wsMutex_);
@@ -122,7 +124,7 @@ void WebSocketClient::ConnectAndRun()
             {
                 std::lock_guard<std::mutex> lock(wsMutex_);
                 ws_ = std::move(wsTemp);
-                ioc_ = ioc;  // keep ioc alive as long as ws_ lives
+                ioc_ = ioc;
             }
 
             connected_ = true;
@@ -159,6 +161,13 @@ void WebSocketClient::ConnectAndRun()
     }
 
     std::cout << "WebSocket connection thread exited\n";
+}
+
+void WebSocketClient::ClearSendQueue()
+{
+    std::lock_guard<std::mutex> lock(sendMutex_);
+    while (!sendQueue_.empty())
+        sendQueue_.pop();
 }
 
 void WebSocketClient::Restart(const std::string& host, const std::string& port)

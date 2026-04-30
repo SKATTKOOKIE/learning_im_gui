@@ -43,6 +43,9 @@ void JointPositionController::SendJointCommand(int jointIndex, float position, f
         return;
     }
 
+    if (!wsClient_ || !wsClient_->IsConnected())
+        return;
+
     // Convert torque from percentage (0-100) to scale (0-100.00)
     float torqueScale = torque;  // torque is already in the correct scale
 
@@ -72,7 +75,7 @@ void JointPositionController::SendJointCommand(int jointIndex, float position, f
 
 void JointPositionController::SendJawCommand(int command, float velocity, float torque)
 {
-    if (!wsClient_)
+    if (!wsClient_ || !wsClient_->IsConnected())
         return;
 
     JsonMessageBuilder dataBuilder;

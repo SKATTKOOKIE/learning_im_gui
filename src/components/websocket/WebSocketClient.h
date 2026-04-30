@@ -30,6 +30,8 @@ public:
     bool IsConnected() const { return connected_; }
     void SetMessageCallback(MessageCallback cb) { messageCallback_ = cb; }
 
+    void ClearSendQueue();
+
     void SetHost(const std::string& host, const std::string& port)
     {
         host_ = host;
