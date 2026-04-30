@@ -1,6 +1,7 @@
 #include "ControlModeController.h"
 #include "components/websocket/WebSocketClient.h"
 #include "components/websocket/MessageBuilder.h"
+#include "components/Protocol/ControlMode.h"
 #include <iostream>
 
 ControlModeController::ControlModeController(std::shared_ptr<WebSocketClient> client,
@@ -9,7 +10,7 @@ ControlModeController::ControlModeController(std::shared_ptr<WebSocketClient> cl
 {
 }
 
-void ControlModeController::SendCommand(ControlModeCommands command)
+void ControlModeController::SendCommand(control_mode::Command cmd)
 {
     if (!wsClient_)
     {
@@ -17,19 +18,19 @@ void ControlModeController::SendCommand(ControlModeCommands command)
     }
 
     std::string message =
-        CommandMessageBuilder::BuildControlModeCommand(static_cast<int>(command));
+        CommandMessageBuilder::BuildControlModeCommand(static_cast<int>(cmd));
 
     wsClient_->Send(message);
 }
 
 void ControlModeController::SetStandby()
 {
-    SendCommand(ControlModeCommands::CONTROL_MODE_COMMAND_SET_STANDBY);
+    SendCommand(control_mode::Command::SET_STANDBY);
 }
 
 void ControlModeController::SetActive()
 {
-    SendCommand(ControlModeCommands::CONTROL_MODE_COMMAND_SET_ACTIVE);
+    SendCommand(control_mode::Command::SET_ACTIVE);
 }
 
 void ControlModeController::HandleTelemetry(const std::string& message)
@@ -46,19 +47,16 @@ void ControlModeController::HandleTelemetry(const std::string& message)
 
     switch (telemetryState)
     {
-        case TelemetryMessageParser::ControlModeState::Unknown:
-            state_ = ControlModeStates::CONTROL_MODE_STATE_UNKNOWN;
+        case control_mode::State::UNKNOWN:
+            state_ = control_mode::State::UNKNOWN;
             break;
-
-        case TelemetryMessageParser::ControlModeState::Standby:
-            state_ = ControlModeStates::CONTROL_MODE_STATE_STANDBY;
+        case control_mode::State::STANDBY:
+            state_ = control_mode::State::STANDBY;
             break;
-
-        case TelemetryMessageParser::ControlModeState::Active:
-            state_ = ControlModeStates::CONTROL_MODE_STATE_ACTIVE;
+        case control_mode::State::ACTIVE:
+            state_ = control_mode::State::ACTIVE;
             break;
-
         default:
-            return; // ignore anything else
+            return;
     }
 }

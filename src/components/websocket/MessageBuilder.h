@@ -8,6 +8,7 @@
 #include <memory>
 #include <iostream>
 #include <cstdio>
+#include "components/Protocol/ControlMode.h"
 
 // Base interface for message builders
 class IMessageBuilder
@@ -238,12 +239,7 @@ public:
         Disconnected = 2,
     };
 
-    enum class ControlModeState
-    {
-        Unknown = 0,
-        Standby = 1,
-        Active = 2,
-    };
+    using ControlModeState = control_mode::State;
 
     static bool TryParseConnectionState(const std::string& jsonStr, ConnectionState& state)
     {
@@ -325,12 +321,19 @@ public:
         if (sscanf(jsonStr.c_str() + statePos, "%d", &stateValue) != 1)
             return false;
             
-        switch (stateValue)
+        switch (static_cast<control_mode::State>(stateValue))
         {
-            case 0: state = ControlModeState::Unknown; break;
-            case 1: state = ControlModeState::Standby; break;
-            case 2: state = ControlModeState::Active; break;
-            default: return false;
+            case control_mode::State::UNKNOWN:  
+                state = control_mode::State::UNKNOWN;  
+                break;
+            case control_mode::State::STANDBY:  
+                state = control_mode::State::STANDBY;  
+                break;
+            case control_mode::State::ACTIVE:   
+                state = control_mode::State::ACTIVE;   
+                break;
+            default: 
+                return false;
         }
         
         return true;
