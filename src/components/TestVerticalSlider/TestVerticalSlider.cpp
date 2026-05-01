@@ -77,13 +77,11 @@ void TestVerticalSlider::Render()
 
             // Velocity — input + label side by side, no step buttons
             ImGui::SetNextItemWidth(80.0f);
-            ImGui::InputFloat(vel_id.c_str(), &joint_velocity[i], 0.0f, 0.0f, "%.1f");
-            ImGui::SameLine(); ImGui::Text("deg/s");
+            EmanipCustomWidgets::LabelledInputFloat(vel_id.c_str(),    &joint_velocity[i], 80.0f, "deg/s");
 
             // Torque — input + label side by side, no step buttons
             ImGui::SetNextItemWidth(80.0f);
-            ImGui::InputFloat(torque_id.c_str(), &joint_torque[i], 0.0f, 0.0f, "%.2f");
-            ImGui::SameLine(); ImGui::Text("%%");
+            EmanipCustomWidgets::LabelledInputFloat(torque_id.c_str(), &joint_torque[i],   80.0f, "%",    "%.2f");
 
             joint_torque[i] = std::clamp(joint_torque[i], 0.0f, 100.0f);
 
@@ -100,12 +98,10 @@ void TestVerticalSlider::Render()
             ImGui::Spacing();
 
             ImGui::SetNextItemWidth(80.0f);
-            ImGui::InputFloat("##jaw_vel",    &jaw_velocity_, 0.0f, 0.0f, "%.1f");
-            ImGui::SameLine(); ImGui::Text("vel");
+            EmanipCustomWidgets::LabelledInputFloat("##jaw_vel",    &jaw_velocity_, 50.0f, "vel");
 
             ImGui::SetNextItemWidth(80.0f);
-            ImGui::InputFloat("##jaw_torque", &jaw_torque_,   0.0f, 0.0f, "%.1f");
-            ImGui::SameLine(); ImGui::Text("torque");
+            EmanipCustomWidgets::LabelledInputFloat("##jaw_torque", &jaw_torque_,   50.0f, "torque");
 
             jaw_velocity_ = std::clamp(jaw_velocity_, 0.0f, 100.0f);
             jaw_torque_   = std::clamp(jaw_torque_,   0.0f, 100.0f);
