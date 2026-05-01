@@ -10,7 +10,7 @@ ConfigurationModalComponent::ConfigurationModalComponent()
     , show_shutdown_modal_(false)
     , pending_shutdown_confirm_(false)
 {
-    std::strncpy(ip_buf_, "172.19.171.29", sizeof(ip_buf_));
+    std::strncpy(ip_buf_, "192.168.150.1", sizeof(ip_buf_));
 }
 
 void ConfigurationModalComponent::Render()
@@ -38,7 +38,7 @@ void ConfigurationModalComponent::DrawPanel(GLFWwindow* win)
 
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
     ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, { 0.5f, 0.5f });
-    ImGui::SetNextWindowSize({ 400, 260 }, ImGuiCond_Appearing);
+    ImGui::SetNextWindowSize({ 400, 400 }, ImGuiCond_Appearing);
 
     if (ImGui::BeginPopupModal("Configuration###ConfigModal", &show_configuration_modal_,
                                ImGuiWindowFlags_NoResize))
